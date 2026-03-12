@@ -26,15 +26,17 @@
   },
   "models": [
     {
-      "model_name": "gemini-3-pro-preview",
-      "friendly_name": "Gemini Pro 3.0 Preview",
+      "model_name": "gemini-3.1-pro-preview",
+      "friendly_name": "Gemini Pro 3.1 Preview",
       "aliases": [
         "pro",
         "gemini3",
-        "gemini-pro"
+        "gemini-pro",
+        "gemini3.1",
+        "gemini-3.1-pro"
       ],
-      "intelligence_score": 18,
-      "description": "Deep reasoning + thinking mode (1M context) - Complex problems, architecture, deep analysis",
+      "intelligence_score": 19,
+      "description": "Latest Gemini flagship (1M context, 65K output) - 2x reasoning over 3.0, top benchmarks, deep analysis",
       "context_window": 1048576,
       "max_output_tokens": 65536,
       "max_thinking_tokens": 32768,
@@ -47,6 +49,50 @@
       "supports_temperature": true,
       "allow_code_generation": true,
       "max_image_size_mb": 32.0
+    },
+    {
+      "model_name": "gemini-3-flash-preview",
+      "friendly_name": "Gemini Flash 3.0 Preview",
+      "aliases": [
+        "gemini3-flash",
+        "flash3",
+        "flash-3"
+      ],
+      "intelligence_score": 13,
+      "description": "Gemini 3 Flash (1M context) - Fast reasoning model with thinking support",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 24576,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
+    },
+    {
+      "model_name": "gemini-3.1-flash-lite-preview",
+      "friendly_name": "Gemini Flash Lite 3.1 Preview",
+      "aliases": [
+        "gemini3-flashlite",
+        "flashlite3",
+        "flash-lite-3"
+      ],
+      "intelligence_score": 10,
+      "description": "Gemini 3.1 Flash Lite (1M context) - Lightweight fast model with thinking support",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 16384,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 20.0
     },
     {
       "model_name": "gemini-2.5-pro",
@@ -91,11 +137,31 @@
       "max_image_size_mb": 20.0
     },
     {
-      "model_name": "gemini-2.0-flash-lite",
-      "friendly_name": "Gemini (Flash Lite 2.0)",
+      "model_name": "gemini-2.5-flash-lite",
+      "friendly_name": "Gemini (Flash Lite 2.5)",
       "aliases": [
         "flashlite",
-        "flash-lite"
+        "flash-lite",
+        "flashlite2.5"
+      ],
+      "intelligence_score": 8,
+      "description": "Gemini 2.5 Flash Lite (1M context) - Lightweight fast model, text-only",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": false,
+      "supports_temperature": true
+    },
+    {
+      "model_name": "gemini-2.0-flash-lite",
+      "friendly_name": "Gemini (Flash Lite 2.0) [Retiring June 2026]",
+      "aliases": [
+        "flashlite2",
+        "flash-lite-2"
       ],
       "intelligence_score": 7,
       "description": "Gemini 2.0 Flash Lite (1M context) - Lightweight fast model, text-only",
