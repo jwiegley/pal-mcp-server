@@ -116,6 +116,8 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
         if category == ToolModelCategory.EXTENDED_REASONING:
             preferred = find_first(
                 [
+                    "gpt-5.5-pro",
+                    "gpt-5.5",
                     "gpt-5.4-pro",
                     "gpt-5.4",
                     "gpt-5.3-codex",
@@ -133,6 +135,7 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
         elif category == ToolModelCategory.FAST_RESPONSE:
             preferred = find_first(
                 [
+                    "gpt-5.5",
                     "gpt-5.4",
                     "gpt-5.2",
                     "gpt-5.3-codex-spark",
@@ -149,6 +152,7 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
         else:  # BALANCED or default
             preferred = find_first(
                 [
+                    "gpt-5.5",
                     "gpt-5.4",
                     "gpt-5.3-codex",
                     "gpt-5.2",
