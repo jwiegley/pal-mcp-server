@@ -120,6 +120,16 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("sonnet-4.1") == "anthropic.claude-sonnet-4.1-20250805-v1:0"
         assert provider._resolve_model_name("opus-4.1") == "anthropic.claude-opus-4.1-20250805-v1:0"
 
+        # Newest Opus generations are present in the DIAL registry
+        assert "opus-4.8" in provider.MODEL_CAPABILITIES["anthropic.claude-opus-4.8-v1:0"].aliases
+        assert "opus-4.6" in provider.MODEL_CAPABILITIES["anthropic.claude-opus-4.6-v1:0"].aliases
+        # Bare "opus-4" now resolves to the 4.8 flagship; versioned alias stays pinned
+        assert provider._resolve_model_name("opus-4") == "anthropic.claude-opus-4.8-v1:0"
+        assert provider._resolve_model_name("opus-4.8") == "anthropic.claude-opus-4.8-v1:0"
+        assert provider._resolve_model_name("opus-4.1") == "anthropic.claude-opus-4.1-20250805-v1:0"
+        # Thinking variant is registered and reports extended-thinking support
+        assert provider.MODEL_CAPABILITIES["anthropic.claude-opus-4.8-v1:0-with-thinking"].supports_extended_thinking is True
+
         # Test case insensitive resolution
         assert provider._resolve_model_name("O3") == "o3-2025-04-16"
         assert provider._resolve_model_name("SONNET-4.1") == "anthropic.claude-sonnet-4.1-20250805-v1:0"
