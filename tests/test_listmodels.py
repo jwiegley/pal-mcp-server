@@ -53,6 +53,21 @@ class TestListModelsTool:
             assert "**Configured Providers**: 0" in content
 
     @pytest.mark.asyncio
+    async def test_execute_includes_anthropic_section(self, tool):
+        """Test that the Anthropic provider is surfaced in the output"""
+        with patch.dict(os.environ, {}, clear=True):
+            os.environ["DEFAULT_MODEL"] = "auto"
+
+            result = await tool.execute({})
+
+            response = json.loads(result[0].text)
+            content = response["content"]
+
+            # Anthropic section renders with a not-configured marker and env key hint
+            assert "Anthropic Claude ❌" in content
+            assert "ANTHROPIC_API_KEY" in content
+
+    @pytest.mark.asyncio
     async def test_execute_with_gemini_configured(self, tool):
         """Test listing models with Gemini configured"""
         env_vars = {"GEMINI_API_KEY": "test-key", "DEFAULT_MODEL": "auto"}
