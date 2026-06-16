@@ -147,8 +147,21 @@ class TestAnthropicGenerateContent:
         assert "thinking" not in kwargs
         assert kwargs["extra_body"]["thinking"] == {"type": "adaptive"}
         assert kwargs["extra_body"]["output_config"] == {"effort": "high"}
-        # Extended thinking forces temperature == 1.0.
-        assert kwargs["temperature"] == 1.0
+        # Adaptive models reject the temperature parameter entirely (HTTP 400),
+        # so it must never be sent.
+        assert "temperature" not in kwargs
+
+    def test_adaptive_model_omits_temperature_when_thinking_off(self):
+        provider, mock_client = self._provider_with_mock_client()
+        mock_client.messages.create.return_value = _make_mock_message()
+
+        provider.generate_content(prompt="hi", model_name="opus-4.8", temperature=0.5, thinking_mode="off")
+        kwargs = mock_client.messages.create.call_args[1]
+        # Thinking is off: no thinking/extra_body params.
+        assert "thinking" not in kwargs
+        assert "extra_body" not in kwargs
+        # Adaptive model: still no temperature, even with thinking off.
+        assert "temperature" not in kwargs
 
     def test_budget_model_uses_budget_thinking(self):
         provider, mock_client = self._provider_with_mock_client()

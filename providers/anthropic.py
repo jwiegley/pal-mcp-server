@@ -131,11 +131,15 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
         if system_prompt:
             request_kwargs["system"] = system_prompt
 
+        # Adaptive-thinking models (those advertising default_reasoning_effort) reject the
+        # temperature parameter entirely; only budget-scheme/non-thinking models accept it.
+        is_adaptive = bool(capabilities.default_reasoning_effort)
         if thinking_params:
             request_kwargs.update(thinking_params)
-            # Extended thinking requires temperature == 1.0 on Anthropic models.
-            request_kwargs["temperature"] = 1.0
-        elif capabilities.supports_temperature:
+            if not is_adaptive:
+                # Budget-scheme extended thinking requires temperature == 1.0.
+                request_kwargs["temperature"] = 1.0
+        elif capabilities.supports_temperature and not is_adaptive:
             # Anthropic accepts temperature in [0, 1]; clamp to be safe.
             request_kwargs["temperature"] = min(max(temperature, 0.0), 1.0)
 
