@@ -128,7 +128,10 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("opus-4.8") == "anthropic.claude-opus-4.8-v1:0"
         assert provider._resolve_model_name("opus-4.1") == "anthropic.claude-opus-4.1-20250805-v1:0"
         # Thinking variant is registered and reports extended-thinking support
-        assert provider.MODEL_CAPABILITIES["anthropic.claude-opus-4.8-v1:0-with-thinking"].supports_extended_thinking is True
+        assert (
+            provider.MODEL_CAPABILITIES["anthropic.claude-opus-4.8-v1:0-with-thinking"].supports_extended_thinking
+            is True
+        )
 
         # Test case insensitive resolution
         assert provider._resolve_model_name("O3") == "o3-2025-04-16"
