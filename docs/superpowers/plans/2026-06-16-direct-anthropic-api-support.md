@@ -16,9 +16,9 @@
 
 2. **Thinking has two schemes; branch by capability.** Newer Claude models (Opus 4.6/4.7/4.8, Sonnet 4.6, Fable 5) use **adaptive** thinking (`thinking={"type":"adaptive"}` + an `effort` string) and *reject* the legacy budget scheme with HTTP 400. Older thinking-capable models (Haiku 4.5, Sonnet 4.5, Opus 4.5) use the **budget** scheme (`thinking={"type":"enabled","budget_tokens":N}`). We distinguish them with the existing `default_reasoning_effort` field in `ModelCapabilities`: if it is set, the model is adaptive; otherwise budget. Adaptive params are sent via the SDK's `extra_body` escape hatch so we are not coupled to a specific SDK type-literal version.
 
-3. **No bare `opus`/`sonnet`/`haiku` aliases (deliberate, deferred).** OpenRouter and DIAL already claim `opus`, `sonnet`, `haiku`, and version aliases like `opus-4.8`. Anthropic sits *above* both in priority order, so at runtime (with a real key) shared version aliases like `opus-4.8` will resolve to the direct Anthropic provider — the desired behavior. We give Anthropic version-specific and `claude-`-prefixed aliases but intentionally do **not** hijack the bare single-word aliases in this plan; that is a follow-up UX decision.
+3. **No bare `opus`/`sonnet`/`haiku` aliases (deliberate, deferred).** OpenRouter already claims the bare `opus`/`sonnet`/`haiku` and dotless forms like `opus4.5`; DIAL claims `opus-4.1`/`sonnet-4.1`-style aliases. The Anthropic manifest uses only version-specific (`opus-4.8`, `sonnet-4.6`, `haiku-4.5`) and `claude-`-prefixed aliases, which were **verified to not overlap** with any existing OpenRouter/DIAL alias. We intentionally do **not** hijack the bare single-word aliases in this plan; that is a follow-up UX decision. Anthropic sits *above* OpenRouter/DIAL in priority order, so if a shared alias is ever introduced, the direct Anthropic provider would win — the desired behavior.
 
-4. **Anthropic is NOT registered in the global test fixture.** Because Anthropic shares version aliases (`opus-4.8`, etc.) with OpenRouter/DIAL and outranks them, registering it globally in `tests/conftest.py` with a dummy key would silently re-route existing OpenRouter/DIAL alias-resolution tests to Anthropic. All Anthropic unit tests instantiate the provider directly (`AnthropicModelProvider("test-key")`), exactly like `tests/test_xai_provider.py` does, so no global registration is needed. We only add `ANTHROPIC_ALLOWED_MODELS` to the restriction-clearing fixture for isolation.
+4. **Anthropic is NOT registered in the global test fixture (conservative choice, not a collision workaround).** Because the Anthropic aliases were verified to not overlap with OpenRouter/DIAL (see #3), global registration would actually be safe today. But no Anthropic unit test needs registry-routed resolution — every test instantiates the provider directly (`AnthropicModelProvider("test-key")`), exactly like `tests/test_xai_provider.py` does — so we keep Anthropic out of the global fixture to minimize blast radius on the existing suite. We only add `ANTHROPIC_ALLOWED_MODELS` to the restriction-clearing fixture for isolation.
 
 ---
 
@@ -186,7 +186,9 @@ def test_registry_assigns_anthropic_provider():
     caps = registry.resolve("claude-opus-4-8")
     assert caps is not None
     assert caps.provider == ProviderType.ANTHROPIC
-    assert caps.friendly_name == "Anthropic (claude-opus-4-8)"
+    # The manifest sets an explicit friendly_name, which the registry preserves
+    # (the friendly_prefix default is only applied when none is supplied).
+    assert caps.friendly_name == "Anthropic (Claude Opus 4.8)"
 
 
 def test_registry_resolves_version_aliases():
@@ -542,21 +544,9 @@ class TestAnthropicProviderIdentity:
         provider = AnthropicModelProvider("test-key")
         with pytest.raises(ValueError, match="Unsupported model 'invalid-model' for provider anthropic"):
             provider.get_capabilities("invalid-model")
-
-    @patch.dict(os.environ, {"ANTHROPIC_ALLOWED_MODELS": "claude-opus-4-8"})
-    def test_model_restrictions(self):
-        import utils.model_restrictions
-        from providers.registry import ModelProviderRegistry
-
-        utils.model_restrictions._restriction_service = None
-        ModelProviderRegistry.reset_for_testing()
-
-        provider = AnthropicModelProvider("test-key")
-        assert provider.validate_model_name("claude-opus-4-8") is True
-        assert provider.validate_model_name("opus-4.8") is True
-        assert provider.validate_model_name("claude-sonnet-4-6") is False
-        assert provider.validate_model_name("sonnet-4.6") is False
 ```
+
+> Note: the provider-level `ANTHROPIC_ALLOWED_MODELS` restriction test lives in Task 8, **not** here. Restriction enforcement requires `ProviderType.ANTHROPIC` to be present in `ModelRestrictionService.ENV_VARS`, which is added in Task 8. If that test ran now, `is_allowed` would return `True` for every model (the provider is absent from the restriction map), so the "blocked" assertions would fail. The `os`/`patch` imports above are still used by the generate-content tests in Task 5.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -707,7 +697,7 @@ __all__ = [
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `python -m pytest tests/test_anthropic_provider.py -v`
-Expected: PASS (identity/capability/restriction tests). The `generate_content` stub is not exercised by these tests.
+Expected: PASS (identity/capability/validation tests). The `generate_content` stub is not exercised by these tests, and the restriction test is deferred to Task 8.
 
 - [ ] **Step 6: Commit**
 
@@ -1332,6 +1322,7 @@ Create `tests/test_anthropic_restrictions.py`:
 import os
 from unittest.mock import patch
 
+from providers.anthropic import AnthropicModelProvider
 from providers.shared import ProviderType
 from utils.model_restrictions import ModelRestrictionService
 
@@ -1345,12 +1336,30 @@ def test_anthropic_restriction_loaded():
     service = ModelRestrictionService()
     assert service.is_allowed(ProviderType.ANTHROPIC, "claude-opus-4-8") is True
     assert service.is_allowed(ProviderType.ANTHROPIC, "claude-sonnet-4-6") is False
+
+
+@patch.dict(os.environ, {"ANTHROPIC_ALLOWED_MODELS": "claude-opus-4-8"})
+def test_provider_validate_model_name_honors_restrictions():
+    """End-to-end: the provider's validate_model_name respects the allowlist (alias-aware)."""
+    import utils.model_restrictions
+    from providers.registry import ModelProviderRegistry
+
+    utils.model_restrictions._restriction_service = None
+    ModelProviderRegistry.reset_for_testing()
+
+    provider = AnthropicModelProvider("test-key")
+    assert provider.validate_model_name("claude-opus-4-8") is True
+    assert provider.validate_model_name("opus-4.8") is True  # alias resolves to the allowed model
+    assert provider.validate_model_name("claude-sonnet-4-6") is False
+    assert provider.validate_model_name("sonnet-4.6") is False
+
+    utils.model_restrictions._restriction_service = None
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `python -m pytest tests/test_anthropic_restrictions.py -v`
-Expected: FAIL with `KeyError: ProviderType.ANTHROPIC`.
+Expected: FAIL — `test_anthropic_env_var_registered` raises `KeyError: ProviderType.ANTHROPIC`, and the other two fail on the "blocked" assertions because `ANTHROPIC_ALLOWED_MODELS` is not yet loaded (so every model is allowed).
 
 - [ ] **Step 3: Add Anthropic to `ENV_VARS` (lines 51-57)**
 
@@ -1398,7 +1407,7 @@ Example:
     ]
 ```
 
-> Note: we deliberately do **not** add Anthropic to the global provider-registration block or to `_set_dummy_keys_if_missing` in conftest (see Key design decision #4). Anthropic shares version aliases with OpenRouter/DIAL and outranks them, so global registration would re-route existing alias-resolution tests.
+> Note: we deliberately do **not** add Anthropic to the global provider-registration block or to `_set_dummy_keys_if_missing` in conftest (see Key design decision #4). This is a conservative blast-radius choice — Anthropic's aliases were verified to not overlap with OpenRouter/DIAL, and all Anthropic unit tests instantiate the provider directly, so global registration is unnecessary.
 
 - [ ] **Step 6: Run test to verify it passes**
 
