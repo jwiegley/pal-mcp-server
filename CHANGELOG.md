@@ -2,6 +2,80 @@
 
 <!-- version list -->
 
+## v1.2.0 (2026-06-16)
+
+### Bug Fixes
+
+- Omit temperature for adaptive-thinking Anthropic models
+  ([`afe0e52`](https://github.com/positron-mark/pal-mcp-server/commit/afe0e52925831cd85b2238c7bc59bedcf1e46a79))
+
+### Build System
+
+- Add anthropic SDK dependency
+  ([`7c78508`](https://github.com/positron-mark/pal-mcp-server/commit/7c785082880720afeb15260dc253e3149254e65e))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`7af0258`](https://github.com/positron-mark/pal-mcp-server/commit/7af02582fa45cbad953048e410891631dd278430))
+
+### Code Style
+
+- Apply code_quality_checks formatting for Opus model additions
+  ([`89b12ed`](https://github.com/positron-mark/pal-mcp-server/commit/89b12ed0cb7159a7cea4af389e15005bd86301be))
+
+### Documentation
+
+- Add implementation plan for direct Anthropic API support
+  ([`d8b235b`](https://github.com/positron-mark/pal-mcp-server/commit/d8b235bf6ca805e52a5377822447dfeb34138cb5))
+
+- Document ANTHROPIC_API_KEY and restrictions in .env.example
+  ([`ba909ef`](https://github.com/positron-mark/pal-mcp-server/commit/ba909ef7a92cd9335888e66efd1e8d0904107268))
+
+- Revise Anthropic plan per validation (fix B1 friendly_name, B2 test ordering, S1 alias rationale)
+  ([`341b19a`](https://github.com/positron-mark/pal-mcp-server/commit/341b19a8f988e4617a44e649f25282e47dc24501))
+
+### Features
+
+- Add Anthropic capability registry and model manifest
+  ([`52515a5`](https://github.com/positron-mark/pal-mcp-server/commit/52515a5c10eda4fb381c1fdfe50348593bb59f58))
+
+- Add Anthropic provider scaffold (identity + capabilities)
+  ([`0538685`](https://github.com/positron-mark/pal-mcp-server/commit/0538685e80f2bd87b07be75ec232dd058c4bf881))
+
+- Add ANTHROPIC provider type
+  ([`cf73250`](https://github.com/positron-mark/pal-mcp-server/commit/cf732504d6ee53b7033f3fd4a62794e5ffbfeb20))
+
+- Add ANTHROPIC_ALLOWED_MODELS restriction support
+  ([`8ad027f`](https://github.com/positron-mark/pal-mcp-server/commit/8ad027faa44f41dbfa6e10cb8498d5a4511396ff))
+
+- Add Claude Opus 4.6/4.7/4.8 (base + thinking) to DIAL config
+  ([`13c454c`](https://github.com/positron-mark/pal-mcp-server/commit/13c454cd55cbc4374fdbbb2652d68193a66f9898))
+
+- Add Claude Opus 4.6/4.7/4.8 to OpenRouter config and repoint opus alias to 4.8
+  ([`44e6cce`](https://github.com/positron-mark/pal-mcp-server/commit/44e6ccee94630626a371f9f44fc13aac9ee0c437))
+
+- Implement Anthropic generate_content, thinking, and token counting
+  ([`e95c088`](https://github.com/positron-mark/pal-mcp-server/commit/e95c088d016330beddba695329e269031565415b))
+
+- Register Anthropic in provider priority order and key map
+  ([`2717778`](https://github.com/positron-mark/pal-mcp-server/commit/27177785324fad9f3113dbc1c21b39edf644963d))
+
+- Surface Anthropic provider in listmodels
+  ([`18cc65d`](https://github.com/positron-mark/pal-mcp-server/commit/18cc65d6a960fcdc0555f44b314f8c08af6263aa))
+
+- Wire Anthropic provider into server bootstrap
+  ([`369de80`](https://github.com/positron-mark/pal-mcp-server/commit/369de80379c656d667438fc25a63337cb34e0383))
+
+### Testing
+
+- Cover new DIAL Opus 4.6/4.7/4.8 slugs and opus-4 repoint
+  ([`4bee094`](https://github.com/positron-mark/pal-mcp-server/commit/4bee0942b66165ce377c2fa3a80f4cc4bd80056c))
+
+- Update OpenRouter alias tests for opus->4.8 repoint and new Opus models
+  ([`e187655`](https://github.com/positron-mark/pal-mcp-server/commit/e1876552b8082cd86b4d4dd5e8598c07caa929a7))
+
+
 ## v1.0.0 (2026-03-12)
 
 - Initial Release
