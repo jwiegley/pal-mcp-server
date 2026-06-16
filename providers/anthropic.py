@@ -150,7 +150,7 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
         def _attempt() -> ModelResponse:
             attempt_counter["value"] += 1
-            response = self.client.messages.create(**request_kwargs)
+            response = self._create_message(request_kwargs)
             return self._build_model_response(response, resolved_model_name, active_thinking_mode)
 
         try:
@@ -244,6 +244,21 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
             return {"thinking": {"type": "enabled", "budget_tokens": budget}}
 
         return {}
+
+    def _create_message(self, request_kwargs: dict):
+        """Execute a Messages request via the streaming API and return the final Message.
+
+        We always stream rather than calling ``messages.create()`` directly. The SDK
+        refuses a non-streaming request *before any network call* when it estimates the
+        request could exceed the ~10 minute idle-connection limit (high ``max_tokens`` or
+        long input) — which is exactly what rejected PAL consensus on Opus 4.8, since the
+        request falls back to the model's full ``max_output_tokens`` ceiling (128K).
+        Streaming sidesteps that guard and provides timeout protection; ``get_final_message()``
+        reconstructs the same Message object ``messages.create()`` would have returned, so
+        downstream parsing is unchanged.
+        """
+        with self.client.messages.stream(**request_kwargs) as stream:
+            return stream.get_final_message()
 
     def _build_model_response(self, response, resolved_model_name: str, thinking_mode: Optional[str]) -> ModelResponse:
         """Convert an Anthropic Message into a PAL ModelResponse."""

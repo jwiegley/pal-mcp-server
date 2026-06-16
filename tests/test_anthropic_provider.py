@@ -81,6 +81,18 @@ def _make_mock_message(text="Hello from Claude", stop_reason="end_turn", input_t
     return message
 
 
+def _wire_stream(mock_client, message):
+    """Wire ``mock_client.messages.stream(...)`` as a context manager yielding ``message``.
+
+    The provider streams every request and calls ``get_final_message()``; tests assert
+    against ``mock_client.messages.stream`` rather than ``messages.create``.
+    """
+    stream_cm = MagicMock()
+    stream_cm.__enter__.return_value.get_final_message.return_value = message
+    mock_client.messages.stream.return_value = stream_cm
+    return stream_cm
+
+
 class TestAnthropicGenerateContent:
     def setup_method(self):
         import utils.model_restrictions
@@ -100,7 +112,7 @@ class TestAnthropicGenerateContent:
 
     def test_generate_content_resolves_alias_and_builds_request(self):
         provider, mock_client = self._provider_with_mock_client()
-        mock_client.messages.create.return_value = _make_mock_message()
+        _wire_stream(mock_client, _make_mock_message())
 
         result = provider.generate_content(
             prompt="What is 2+2?",
@@ -110,8 +122,9 @@ class TestAnthropicGenerateContent:
             max_output_tokens=256,
         )
 
-        mock_client.messages.create.assert_called_once()
-        kwargs = mock_client.messages.create.call_args[1]
+        mock_client.messages.stream.assert_called_once()
+        mock_client.messages.create.assert_not_called()
+        kwargs = mock_client.messages.stream.call_args[1]
         # Alias resolved to canonical id.
         assert kwargs["model"] == "claude-opus-4-8"
         # max_tokens is required and forwarded.
@@ -131,18 +144,18 @@ class TestAnthropicGenerateContent:
 
     def test_generate_content_defaults_max_tokens_from_capabilities(self):
         provider, mock_client = self._provider_with_mock_client()
-        mock_client.messages.create.return_value = _make_mock_message()
+        _wire_stream(mock_client, _make_mock_message())
 
         provider.generate_content(prompt="hi", model_name="claude-haiku-4-5-20251001")
-        kwargs = mock_client.messages.create.call_args[1]
+        kwargs = mock_client.messages.stream.call_args[1]
         assert kwargs["max_tokens"] == 64000  # haiku max_output_tokens
 
     def test_adaptive_model_uses_adaptive_thinking(self):
         provider, mock_client = self._provider_with_mock_client()
-        mock_client.messages.create.return_value = _make_mock_message()
+        _wire_stream(mock_client, _make_mock_message())
 
         provider.generate_content(prompt="think", model_name="opus-4.8", thinking_mode="high")
-        kwargs = mock_client.messages.create.call_args[1]
+        kwargs = mock_client.messages.stream.call_args[1]
         # Adaptive thinking goes through extra_body; no legacy budget block.
         assert "thinking" not in kwargs
         assert kwargs["extra_body"]["thinking"] == {"type": "adaptive"}
@@ -153,10 +166,10 @@ class TestAnthropicGenerateContent:
 
     def test_adaptive_model_omits_temperature_when_thinking_off(self):
         provider, mock_client = self._provider_with_mock_client()
-        mock_client.messages.create.return_value = _make_mock_message()
+        _wire_stream(mock_client, _make_mock_message())
 
         provider.generate_content(prompt="hi", model_name="opus-4.8", temperature=0.5, thinking_mode="off")
-        kwargs = mock_client.messages.create.call_args[1]
+        kwargs = mock_client.messages.stream.call_args[1]
         # Thinking is off: no thinking/extra_body params.
         assert "thinking" not in kwargs
         assert "extra_body" not in kwargs
@@ -165,10 +178,10 @@ class TestAnthropicGenerateContent:
 
     def test_budget_model_uses_budget_thinking(self):
         provider, mock_client = self._provider_with_mock_client()
-        mock_client.messages.create.return_value = _make_mock_message()
+        _wire_stream(mock_client, _make_mock_message())
 
         provider.generate_content(prompt="think", model_name="claude-haiku-4-5-20251001", thinking_mode="medium")
-        kwargs = mock_client.messages.create.call_args[1]
+        kwargs = mock_client.messages.stream.call_args[1]
         # Budget scheme uses the typed thinking param.
         assert kwargs["thinking"]["type"] == "enabled"
         # 24000 * 0.33 == 7920, above the 1024 minimum.
@@ -178,13 +191,13 @@ class TestAnthropicGenerateContent:
 
     def test_temperature_clamped_when_no_thinking(self):
         provider, mock_client = self._provider_with_mock_client()
-        mock_client.messages.create.return_value = _make_mock_message()
+        _wire_stream(mock_client, _make_mock_message())
 
         # thinking_mode that is not a known budget level disables thinking.
         provider.generate_content(
             prompt="hi", model_name="claude-haiku-4-5-20251001", temperature=1.7, thinking_mode="off"
         )
-        kwargs = mock_client.messages.create.call_args[1]
+        kwargs = mock_client.messages.stream.call_args[1]
         assert "thinking" not in kwargs
         assert "extra_body" not in kwargs
         assert kwargs["temperature"] == 1.0  # clamped from 1.7 to Anthropic max of 1.0
@@ -206,7 +219,7 @@ class TestAnthropicGenerateContent:
         msg.usage = MagicMock()
         msg.usage.input_tokens = 1
         msg.usage.output_tokens = 2
-        mock_client.messages.create.return_value = msg
+        _wire_stream(mock_client, msg)
 
         result = provider.generate_content(prompt="x", model_name="opus-4.8", thinking_mode="off")
         assert result.content == "foo bar"  # thinking block excluded from content
@@ -227,6 +240,6 @@ class TestAnthropicGenerateContent:
 
     def test_api_error_wrapped_in_runtime_error(self):
         provider, mock_client = self._provider_with_mock_client()
-        mock_client.messages.create.side_effect = ValueError("bad request")
+        mock_client.messages.stream.side_effect = ValueError("bad request")
         with pytest.raises(RuntimeError, match="Anthropic API error"):
             provider.generate_content(prompt="x", model_name="opus-4.8", thinking_mode="off")
