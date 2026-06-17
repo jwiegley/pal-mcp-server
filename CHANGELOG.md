@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.2.1 (2026-06-17)
+
+### Bug Fixes
+
+- Add anthropic to runtime dependencies
+  ([`8f00bdc`](https://github.com/positron-mark/pal-mcp-server/commit/8f00bdc3d38ffec34540921273de84e0bbe8359f))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`7277852`](https://github.com/positron-mark/pal-mcp-server/commit/72778520552263c0fd0337596098210eb4335f2a))
+
+
 ## v1.2.0 (2026-06-16)
 
 ### Bug Fixes
