@@ -33,8 +33,8 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
     DEFAULT_BASE_URL = "https://api.anthropic.com"
 
     # Canonical model identifiers used for tool-category routing.
-    PRIMARY_MODEL = "claude-opus-4-8"
-    FALLBACK_MODEL = "claude-sonnet-4-6"
+    PRIMARY_MODEL = "claude-fable-5"
+    FALLBACK_MODEL = "claude-opus-4-8"
     FAST_MODEL = "claude-haiku-4-5-20251001"
 
     # PAL thinking levels -> fraction of a model's max_thinking_tokens (budget scheme).
@@ -208,7 +208,16 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
             return find_first([self.FAST_MODEL, self.FALLBACK_MODEL, self.PRIMARY_MODEL]) or allowed_models[0]
         if category == ToolModelCategory.EXTENDED_REASONING:
             return (
-                find_first([self.PRIMARY_MODEL, "claude-opus-4-7", "claude-opus-4-6", self.FALLBACK_MODEL])
+                find_first(
+                    [
+                        self.PRIMARY_MODEL,
+                        self.FALLBACK_MODEL,
+                        "claude-opus-4-7",
+                        "claude-opus-4-6",
+                        "claude-sonnet-5",
+                        "claude-sonnet-4-6",
+                    ]
+                )
                 or allowed_models[0]
             )
         return find_first([self.PRIMARY_MODEL, self.FALLBACK_MODEL, self.FAST_MODEL]) or allowed_models[0]
@@ -271,6 +280,15 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
             elif block_type == "thinking":
                 thinking_parts.append(getattr(block, "thinking", "") or "")
 
+        stop_reason = getattr(response, "stop_reason", None)
+        if stop_reason == "refusal":
+            # Fable 5 safety classifiers decline with HTTP 200 + stop_reason "refusal"
+            # (empty or partial content) rather than an API error.
+            logger.warning(
+                "Anthropic model %s refused the request (stop_reason=refusal); response content is empty or partial",
+                resolved_model_name,
+            )
+
         usage: dict[str, int] = {}
         raw_usage = getattr(response, "usage", None)
         if raw_usage is not None:
@@ -291,7 +309,7 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
             provider=ProviderType.ANTHROPIC,
             metadata={
                 "thinking_mode": thinking_mode,
-                "finish_reason": getattr(response, "stop_reason", None),
+                "finish_reason": stop_reason,
                 "has_thinking": bool(thinking_parts),
             },
         )
