@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.3.0 (2026-07-02)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`50b4a90`](https://github.com/positron-mark/pal-mcp-server/commit/50b4a9013f7f10986f2353073416a5f53ee8f523))
+
+### Features
+
+- Add Claude Fable 5 and Sonnet 5 to Anthropic provider
+  ([`f2083c1`](https://github.com/positron-mark/pal-mcp-server/commit/f2083c1a5fb318fc39b3ec320c3b35cd743296bb))
+
+
 ## v1.2.1 (2026-06-17)
 
 ### Bug Fixes
