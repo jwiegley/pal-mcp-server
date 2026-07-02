@@ -35,6 +35,8 @@ class TestAnthropicProviderIdentity:
 
     def test_model_validation(self):
         provider = AnthropicModelProvider("test-key")
+        assert provider.validate_model_name("claude-fable-5") is True
+        assert provider.validate_model_name("fable") is True
         assert provider.validate_model_name("claude-opus-4-8") is True
         assert provider.validate_model_name("opus-4.8") is True
         assert provider.validate_model_name("sonnet-4.6") is True
@@ -58,6 +60,14 @@ class TestAnthropicProviderIdentity:
         assert caps.max_output_tokens == 128_000
         assert caps.supports_extended_thinking is True
         assert caps.supports_images is True
+        assert caps.default_reasoning_effort == "high"
+
+    def test_get_capabilities_fable(self):
+        provider = AnthropicModelProvider("test-key")
+        caps = provider.get_capabilities("fable")
+        assert caps.model_name == "claude-fable-5"
+        assert caps.context_window == 1_000_000
+        assert caps.max_output_tokens == 128_000
         assert caps.default_reasoning_effort == "high"
 
     def test_unsupported_model_capabilities(self):
@@ -176,6 +186,39 @@ class TestAnthropicGenerateContent:
         # Adaptive model: still no temperature, even with thinking off.
         assert "temperature" not in kwargs
 
+    def test_fable_uses_adaptive_thinking_and_no_temperature(self):
+        provider, mock_client = self._provider_with_mock_client()
+        _wire_stream(mock_client, _make_mock_message())
+
+        provider.generate_content(prompt="think", model_name="fable", temperature=0.5, thinking_mode="max")
+        kwargs = mock_client.messages.stream.call_args[1]
+        assert kwargs["model"] == "claude-fable-5"
+        # Fable 5 thinking is always on; adaptive is the only accepted explicit config.
+        # budget_tokens and {"type": "disabled"} both 400 on the API.
+        assert "thinking" not in kwargs
+        assert kwargs["extra_body"]["thinking"] == {"type": "adaptive"}
+        assert kwargs["extra_body"]["output_config"] == {"effort": "max"}
+        # Fable 5 rejects temperature/top_p/top_k (HTTP 400); never send them.
+        assert "temperature" not in kwargs
+
+    def test_fable_refusal_stop_reason_surfaced(self, caplog):
+        """Fable 5 safety classifiers return HTTP 200 with stop_reason='refusal' and empty
+        content; the provider must surface it in metadata and log a warning instead of
+        silently returning an empty response."""
+        import logging
+
+        provider, mock_client = self._provider_with_mock_client()
+        refusal = _make_mock_message(text="", stop_reason="refusal")
+        refusal.content = []
+        _wire_stream(mock_client, refusal)
+
+        with caplog.at_level(logging.WARNING, logger="providers.anthropic"):
+            result = provider.generate_content(prompt="x", model_name="fable", thinking_mode="off")
+
+        assert result.content == ""
+        assert result.metadata["finish_reason"] == "refusal"
+        assert any("refus" in record.message.lower() for record in caplog.records)
+
     def test_budget_model_uses_budget_thinking(self):
         provider, mock_client = self._provider_with_mock_client()
         _wire_stream(mock_client, _make_mock_message())
@@ -243,3 +286,81 @@ class TestAnthropicGenerateContent:
         mock_client.messages.stream.side_effect = ValueError("bad request")
         with pytest.raises(RuntimeError, match="Anthropic API error"):
             provider.generate_content(prompt="x", model_name="opus-4.8", thinking_mode="off")
+
+
+class TestAnthropicPreferredModel:
+    """Fable 5 is the primary model and outranks Opus 4.8 in tool-category routing."""
+
+    def setup_method(self):
+        import utils.model_restrictions
+
+        utils.model_restrictions._restriction_service = None
+
+    def teardown_method(self):
+        import utils.model_restrictions
+
+        utils.model_restrictions._restriction_service = None
+
+    ALL_MODELS = [
+        "claude-fable-5",
+        "claude-opus-4-8",
+        "claude-opus-4-7",
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5-20251001",
+    ]
+
+    def test_extended_reasoning_prefers_fable_over_opus(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        preferred = provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, self.ALL_MODELS)
+        assert preferred == "claude-fable-5"
+
+    def test_extended_reasoning_falls_back_to_opus_when_fable_unavailable(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        allowed = [m for m in self.ALL_MODELS if m != "claude-fable-5"]
+        preferred = provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed)
+        assert preferred == "claude-opus-4-8"
+
+    def test_default_category_prefers_fable(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        preferred = provider.get_preferred_model(ToolModelCategory.BALANCED, self.ALL_MODELS)
+        assert preferred == "claude-fable-5"
+
+    def test_fast_response_still_prefers_haiku(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        preferred = provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, self.ALL_MODELS)
+        assert preferred == "claude-haiku-4-5-20251001"
+
+    def test_extended_reasoning_prefers_sonnet_5_over_sonnet_4_6(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        allowed = ["claude-sonnet-4-6", "claude-sonnet-5"]
+        preferred = provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed)
+        assert preferred == "claude-sonnet-5"
+
+    def test_fallback_model_is_opus(self):
+        assert AnthropicModelProvider.FALLBACK_MODEL == "claude-opus-4-8"
+
+    def test_balanced_falls_back_to_opus_when_fable_unavailable(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        allowed = [m for m in self.ALL_MODELS if m != "claude-fable-5"]
+        preferred = provider.get_preferred_model(ToolModelCategory.BALANCED, allowed)
+        assert preferred == "claude-opus-4-8"
+
+    def test_fast_response_falls_back_to_opus_when_haiku_unavailable(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        allowed = [m for m in self.ALL_MODELS if m != "claude-haiku-4-5-20251001"]
+        preferred = provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed)
+        assert preferred == "claude-opus-4-8"

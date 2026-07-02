@@ -100,6 +100,25 @@
       "max_image_size_mb": 5.0
     },
     {
+      "model_name": "claude-sonnet-5",
+      "friendly_name": "Anthropic (Claude Sonnet 5)",
+      "aliases": ["sonnet", "sonnet-5", "claude-sonnet-5"],
+      "intelligence_score": 16,
+      "description": "Claude Sonnet 5 (1M context) - near-Opus coding/agentic quality at Sonnet cost, adaptive thinking",
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "max_thinking_tokens": 0,
+      "supports_extended_thinking": true,
+      "default_reasoning_effort": "high",
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "max_image_size_mb": 5.0
+    },
+    {
       "model_name": "claude-sonnet-4-6",
       "friendly_name": "Anthropic (Claude Sonnet 4.6)",
       "aliases": ["sonnet-4.6", "claude-sonnet-4.6"],
