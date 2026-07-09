@@ -129,6 +129,17 @@ class TestOpenRouterModelRegistry:
         assert registry.resolve("") is None
         assert registry.resolve("non-existent") is None
 
+    def test_deprecated_openai_gpt_models_are_not_exposed(self):
+        """OpenRouter's curated catalogue must exclude deprecated OpenAI GPT models."""
+        registry = OpenRouterModelRegistry()
+
+        for model_name in (
+            "openai/gpt-5-codex",
+            "openai/gpt-5.1-codex",
+            "openai/gpt-5.1-codex-mini",
+        ):
+            assert registry.resolve(model_name) is None
+
     def test_model_capabilities_conversion(self):
         """Test that registry returns ModelCapabilities directly."""
         registry = OpenRouterModelRegistry()

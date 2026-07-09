@@ -94,9 +94,9 @@ class TestAutoModeComprehensive:
                     "OPENROUTER_API_KEY": None,
                 },
                 {
-                    "EXTENDED_REASONING": "gpt-5.5-pro",  # GPT-5.5 Pro prioritized for deep reasoning
-                    "FAST_RESPONSE": "gpt-5.5",  # Prefer gpt-5.5 for speed
-                    "BALANCED": "gpt-5.5",  # Prefer gpt-5.5 for balanced
+                    "EXTENDED_REASONING": "gpt-5.6-sol",  # GPT-5.6 Sol for deep reasoning
+                    "FAST_RESPONSE": "gpt-5.6-luna",  # GPT-5.6 Luna for high-volume work
+                    "BALANCED": "gpt-5.6-terra",  # GPT-5.6 Terra balances quality and cost
                 },
             ),
             # Only X.AI API available

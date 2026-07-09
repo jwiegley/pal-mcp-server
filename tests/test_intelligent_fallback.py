@@ -36,15 +36,15 @@ class TestIntelligentFallback:
         registry._initialized_providers.update(self._original_initialized)
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-key", "GEMINI_API_KEY": ""}, clear=False)
-    def test_prefers_openai_o3_mini_when_available(self):
-        """Test that gpt-5.5 is preferred when OpenAI API key is available (based on new preference order)"""
+    def test_prefers_openai_gpt56_terra_when_available(self):
+        """Test that GPT-5.6 Terra is the balanced OpenAI fallback."""
         # Register only OpenAI provider for this test
         from providers.openai import OpenAIModelProvider
 
         ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
         fallback_model = ModelProviderRegistry.get_preferred_fallback_model()
-        assert fallback_model == "gpt-5.5"  # Based on new preference order: gpt-5.5 is flagship
+        assert fallback_model == "gpt-5.6-terra"
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "", "GEMINI_API_KEY": "test-gemini-key"}, clear=False)
     def test_prefers_gemini_flash_when_openai_unavailable(self):
@@ -147,8 +147,8 @@ class TestIntelligentFallback:
 
                 history, tokens = build_conversation_history(context, model_context=None)
 
-                # Verify that ModelContext was called with gpt-5.5 (the intelligent fallback based on new preference order)
-                mock_context_class.assert_called_once_with("gpt-5.5")
+                # Verify that ModelContext uses the balanced GPT-5.6 Terra fallback.
+                mock_context_class.assert_called_once_with("gpt-5.6-terra")
 
     def test_auto_mode_with_gemini_only(self):
         """Test auto mode behavior when only Gemini API key is available"""

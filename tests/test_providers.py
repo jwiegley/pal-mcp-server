@@ -210,8 +210,9 @@ class TestOpenAIProvider:
         assert provider.validate_model_name("o4mini")
         assert provider.validate_model_name("o4-mini")
         assert provider.validate_model_name("gpt-5.2")
-        assert provider.validate_model_name("gpt-5.1-codex")
-        assert provider.validate_model_name("gpt-5.1-codex-mini")
+        assert provider.validate_model_name("gpt-5.6")
+        assert provider.validate_model_name("gpt-5.6-terra")
+        assert provider.validate_model_name("gpt-5.6-luna")
         assert not provider.validate_model_name("gpt-4o")
         assert not provider.validate_model_name("invalid-model")
 
@@ -223,19 +224,15 @@ class TestOpenAIProvider:
         for alias in aliases:
             assert not provider.get_capabilities(alias).supports_extended_thinking
 
-    def test_gpt52_family_capabilities(self):
-        """Ensure GPT-5.2 base model exposes correct capability flags."""
+    def test_gpt56_family_capabilities(self):
+        """Ensure GPT-5.6 family exposes documented capability flags and scores."""
         provider = OpenAIModelProvider(api_key="test-key")
 
-        base = provider.get_capabilities("gpt-5.2")
-        assert base.supports_streaming
-        assert base.allow_code_generation
+        sol = provider.get_capabilities("gpt-5.6")
+        terra = provider.get_capabilities("gpt-5.6-terra")
+        luna = provider.get_capabilities("gpt-5.6-luna")
 
-        codex = provider.get_capabilities("gpt-5.1-codex")
-        assert not codex.supports_streaming
-        assert codex.use_openai_response_api
-        assert codex.allow_code_generation
-
-        codex_mini = provider.get_capabilities("gpt-5.1-codex-mini")
-        assert codex_mini.supports_streaming
-        assert codex_mini.allow_code_generation
+        assert sol.model_name == "gpt-5.6-sol"
+        assert all(model.supports_streaming for model in (sol, terra, luna))
+        assert all(model.allow_code_generation for model in (sol, terra, luna))
+        assert [model.intelligence_score for model in (sol, terra, luna)] == [20, 19, 18]

@@ -51,8 +51,10 @@ class TestOpenAIProvider:
         assert provider.validate_model_name("gpt-5") is True
         assert provider.validate_model_name("gpt-5-mini") is True
         assert provider.validate_model_name("gpt-5.2") is True
-        assert provider.validate_model_name("gpt-5.1-codex") is True
-        assert provider.validate_model_name("gpt-5.1-codex-mini") is True
+        assert provider.validate_model_name("gpt-5.6") is True
+        assert provider.validate_model_name("gpt-5.6-sol") is True
+        assert provider.validate_model_name("gpt-5.6-terra") is True
+        assert provider.validate_model_name("gpt-5.6-luna") is True
 
         # Test valid aliases
         assert provider.validate_model_name("mini") is True
@@ -64,8 +66,9 @@ class TestOpenAIProvider:
         assert provider.validate_model_name("gpt5mini") is True
         assert provider.validate_model_name("gpt5.2") is True
         assert provider.validate_model_name("gpt5.4") is True
-        assert provider.validate_model_name("gpt5.1-codex") is True
-        assert provider.validate_model_name("codex-mini") is True
+        assert provider.validate_model_name("gpt5.6") is True
+        assert provider.validate_model_name("gpt5.6terra") is True
+        assert provider.validate_model_name("gpt5.6luna") is True
 
         # Test invalid model
         assert provider.validate_model_name("invalid-model") is False
@@ -86,8 +89,9 @@ class TestOpenAIProvider:
         assert provider._resolve_model_name("gpt5mini") == "gpt-5-mini"
         assert provider._resolve_model_name("gpt5.2") == "gpt-5.2"
         assert provider._resolve_model_name("gpt5.4") == "gpt-5.4"
-        assert provider._resolve_model_name("gpt5.1-codex") == "gpt-5.1-codex"
-        assert provider._resolve_model_name("codex-mini") == "gpt-5.1-codex-mini"
+        assert provider._resolve_model_name("gpt5.6") == "gpt-5.6-sol"
+        assert provider._resolve_model_name("gpt5.6terra") == "gpt-5.6-terra"
+        assert provider._resolve_model_name("gpt5.6luna") == "gpt-5.6-luna"
 
         # Test full name passthrough
         assert provider._resolve_model_name("o3") == "o3"
@@ -99,8 +103,10 @@ class TestOpenAIProvider:
         assert provider._resolve_model_name("gpt-5-mini") == "gpt-5-mini"
         assert provider._resolve_model_name("gpt-5.2") == "gpt-5.2"
         assert provider._resolve_model_name("gpt-5.4") == "gpt-5.4"
-        assert provider._resolve_model_name("gpt-5.1-codex") == "gpt-5.1-codex"
-        assert provider._resolve_model_name("gpt-5.1-codex-mini") == "gpt-5.1-codex-mini"
+        assert provider._resolve_model_name("gpt-5.6") == "gpt-5.6-sol"
+        assert provider._resolve_model_name("gpt-5.6-sol") == "gpt-5.6-sol"
+        assert provider._resolve_model_name("gpt-5.6-terra") == "gpt-5.6-terra"
+        assert provider._resolve_model_name("gpt-5.6-luna") == "gpt-5.6-luna"
 
     def test_get_capabilities_o3(self):
         """Test getting model capabilities for O3."""
@@ -172,24 +178,22 @@ class TestOpenAIProvider:
         assert capabilities.supports_json_mode is True
         assert capabilities.allow_code_generation is True
 
-    def test_get_capabilities_gpt51_codex(self):
-        """Test GPT-5.1 Codex is responses-only and non-streaming."""
+    def test_get_capabilities_gpt56_family(self):
+        """Test GPT-5.6 aliases and tiers expose the documented capability ranking."""
         provider = OpenAIModelProvider("test-key")
 
-        capabilities = provider.get_capabilities("gpt-5.1-codex")
-        assert capabilities.model_name == "gpt-5.1-codex"
-        assert capabilities.supports_streaming is False
-        assert capabilities.use_openai_response_api is True
-        assert capabilities.allow_code_generation is True
+        sol = provider.get_capabilities("gpt-5.6")
+        terra = provider.get_capabilities("gpt-5.6-terra")
+        luna = provider.get_capabilities("gpt-5.6-luna")
 
-    def test_get_capabilities_gpt51_codex_mini(self):
-        """Test GPT-5.1 Codex mini exposes streaming and code generation."""
-        provider = OpenAIModelProvider("test-key")
-
-        capabilities = provider.get_capabilities("gpt-5.1-codex-mini")
-        assert capabilities.model_name == "gpt-5.1-codex-mini"
-        assert capabilities.supports_streaming is True
-        assert capabilities.allow_code_generation is True
+        assert sol.model_name == "gpt-5.6-sol"
+        assert sol.context_window == 1_050_000
+        assert sol.max_output_tokens == 128_000
+        assert sol.intelligence_score == 20
+        assert terra.intelligence_score == 19
+        assert luna.intelligence_score == 18
+        assert all(capability.supports_extended_thinking for capability in (sol, terra, luna))
+        assert all(capability.allow_code_generation for capability in (sol, terra, luna))
 
     @patch("providers.openai_compatible.OpenAI")
     def test_generate_content_resolves_alias_before_api_call(self, mock_openai_class):
@@ -312,6 +316,12 @@ class TestOpenAIProvider:
             "gpt5nano",
             "nano",
             "mini",  # resolves to gpt-5-mini
+            "gpt-5.6",
+            "gpt-5.6-terra",
+            "gpt-5.6-luna",
+            "gpt5.6",
+            "gpt5.6terra",
+            "gpt5.6luna",
         ]
         for alias in supported_aliases:
             assert provider.get_capabilities(alias).supports_extended_thinking is True
@@ -322,6 +332,19 @@ class TestOpenAIProvider:
 
         # Invalid models should not validate, treat as unsupported
         assert not provider.validate_model_name("invalid-model")
+
+    def test_deprecated_gpt_models_are_not_supported(self):
+        """Deprecated native OpenAI GPT slugs must not be accepted by the registry."""
+        provider = OpenAIModelProvider("test-key")
+
+        for model_name in (
+            "gpt-5-codex",
+            "gpt-5.1-codex",
+            "gpt-5.1-codex-mini",
+            "gpt-5.2-codex",
+            "gpt-4.1-nano",
+        ):
+            assert provider.validate_model_name(model_name) is False
 
     @patch("providers.openai_compatible.OpenAI")
     def test_o3_pro_routes_to_responses_endpoint(self, mock_openai_class):

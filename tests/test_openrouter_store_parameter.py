@@ -33,7 +33,7 @@ class MockOpenRouterProvider(OpenAICompatibleProvider):
         return True
 
     def list_models(self, **kwargs):
-        return ["openai/gpt-5-pro", "openai/gpt-5.1-codex"]
+        return ["openai/gpt-5-pro", "openai/gpt-5.6-sol"]
 
 
 class MockOpenAIProvider(OpenAICompatibleProvider):
@@ -53,7 +53,7 @@ class MockOpenAIProvider(OpenAICompatibleProvider):
         return True
 
     def list_models(self, **kwargs):
-        return ["gpt-5-pro", "gpt-5.1-codex"]
+        return ["gpt-5-pro", "gpt-5.6-sol"]
 
 
 class TestStoreParameterHandling(unittest.TestCase):
