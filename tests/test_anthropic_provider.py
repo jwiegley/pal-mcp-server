@@ -37,6 +37,9 @@ class TestAnthropicProviderIdentity:
         provider = AnthropicModelProvider("test-key")
         assert provider.validate_model_name("claude-fable-5") is True
         assert provider.validate_model_name("fable") is True
+        assert provider.validate_model_name("claude-opus-5") is True
+        assert provider.validate_model_name("opus") is True
+        assert provider.validate_model_name("opus-5") is True
         assert provider.validate_model_name("claude-opus-4-8") is True
         assert provider.validate_model_name("opus-4.8") is True
         assert provider.validate_model_name("sonnet-4.6") is True
@@ -303,6 +306,7 @@ class TestAnthropicPreferredModel:
 
     ALL_MODELS = [
         "claude-fable-5",
+        "claude-opus-5",
         "claude-opus-4-8",
         "claude-opus-4-7",
         "claude-sonnet-4-6",
@@ -321,6 +325,14 @@ class TestAnthropicPreferredModel:
 
         provider = AnthropicModelProvider("test-key")
         allowed = [m for m in self.ALL_MODELS if m != "claude-fable-5"]
+        preferred = provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed)
+        assert preferred == "claude-opus-5"
+
+    def test_extended_reasoning_falls_back_to_opus_4_8_when_opus_5_unavailable(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        allowed = [m for m in self.ALL_MODELS if m not in ("claude-fable-5", "claude-opus-5")]
         preferred = provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed)
         assert preferred == "claude-opus-4-8"
 
@@ -347,7 +359,7 @@ class TestAnthropicPreferredModel:
         assert preferred == "claude-sonnet-5"
 
     def test_fallback_model_is_opus(self):
-        assert AnthropicModelProvider.FALLBACK_MODEL == "claude-opus-4-8"
+        assert AnthropicModelProvider.FALLBACK_MODEL == "claude-opus-5"
 
     def test_balanced_falls_back_to_opus_when_fable_unavailable(self):
         from tools.models import ToolModelCategory
@@ -355,7 +367,7 @@ class TestAnthropicPreferredModel:
         provider = AnthropicModelProvider("test-key")
         allowed = [m for m in self.ALL_MODELS if m != "claude-fable-5"]
         preferred = provider.get_preferred_model(ToolModelCategory.BALANCED, allowed)
-        assert preferred == "claude-opus-4-8"
+        assert preferred == "claude-opus-5"
 
     def test_fast_response_falls_back_to_opus_when_haiku_unavailable(self):
         from tools.models import ToolModelCategory
@@ -363,4 +375,4 @@ class TestAnthropicPreferredModel:
         provider = AnthropicModelProvider("test-key")
         allowed = [m for m in self.ALL_MODELS if m != "claude-haiku-4-5-20251001"]
         preferred = provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed)
-        assert preferred == "claude-opus-4-8"
+        assert preferred == "claude-opus-5"
