@@ -1,4 +1,4 @@
-mcp>=1.0.0
+mcp>=1.0.0,<2  # mcp 2.0 removed the low-level Server decorator API used in server.py
 google-genai>=1.19.0
 openai>=1.55.2  # Minimum version for httpx 0.28.0 compatibility
 anthropic>=0.40.0  # Direct Anthropic Messages API support
