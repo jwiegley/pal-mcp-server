@@ -2,6 +2,27 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-07-31)
+
+### Bug Fixes
+
+- Pin mcp<2 to unblock CI
+  ([`90a3422`](https://github.com/positron-mark/pal-mcp-server/commit/90a3422820bdd5fddcc8e89f7035cdb5f0c0ee38))
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`89f05d7`](https://github.com/positron-mark/pal-mcp-server/commit/89f05d7cc5ecacaf527d2d6fbacc68a6b6a7534d))
+
+- Sync version to config.py [skip ci]
+  ([`b182312`](https://github.com/positron-mark/pal-mcp-server/commit/b182312e144cd60126f9d259ca0476e2bbb84f47))
+
+### Features
+
+- Add Claude Opus 5 to Anthropic provider
+  ([`7a5465d`](https://github.com/positron-mark/pal-mcp-server/commit/7a5465d42f806302cc12a3ddec4b23d0e00fb387))
+
+
 ## v1.3.0 (2026-07-02)
 
 ### Chores
