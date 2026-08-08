@@ -380,10 +380,8 @@ def configure_providers():
     Configure and validate AI providers based on available API keys.
 
     This function checks for API keys and registers the appropriate providers.
-    At least one valid API key (Gemini or OpenAI) is required.
-
-    Raises:
-        ValueError: If no valid API keys are found or conflicting configurations detected
+    Providerless startup is valid so MCP clients can complete discovery and call
+    provider-independent tools such as ``version`` and ``listmodels``.
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
@@ -559,18 +557,15 @@ def configure_providers():
     if registered_providers:
         logger.info(f"Registered providers: {', '.join(registered_providers)}")
 
-    # Require at least one valid provider
+    # Keep MCP discovery available even before credentials are present. The
+    # listmodels tool reports provider readiness without exposing values.
     if not valid_providers:
-        raise ValueError(
-            "At least one API configuration is required. Please set either:\n"
-            "- GEMINI_API_KEY for Gemini models\n"
-            "- OPENAI_API_KEY for OpenAI models\n"
-            "- XAI_API_KEY for X.AI GROK models\n"
-            "- ANTHROPIC_API_KEY for Anthropic Claude models\n"
-            "- DIAL_API_KEY for DIAL models\n"
-            "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
-            "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
+        logger.warning(
+            "No model provider configured; set GEMINI_API_KEY, OPENAI_API_KEY, "
+            "XAI_API_KEY, ANTHROPIC_API_KEY, DIAL_API_KEY, OPENROUTER_API_KEY, "
+            "or CUSTOM_API_URL to enable provider-backed tools"
         )
+        return
 
     logger.info(f"Available providers: {', '.join(valid_providers)}")
 

@@ -1,5 +1,6 @@
 """Tests for CustomProvider functionality."""
 
+import json
 import os
 from unittest.mock import MagicMock, patch
 
@@ -308,14 +309,23 @@ class TestConfigureProvidersFunction:
             assert ProviderType.OPENROUTER in available
             assert ProviderType.CUSTOM in available
 
-    def test_configure_providers_no_valid_keys(self):
-        """Test configure_providers raises error when no valid API keys."""
-        from server import configure_providers
+    @pytest.mark.asyncio
+    async def test_configure_providers_no_valid_keys(self):
+        """Providerless startup keeps MCP discovery available."""
+        from server import configure_providers, handle_call_tool, handle_list_tools
 
         with patch.dict(
             os.environ,
             {"GEMINI_API_KEY": "", "OPENAI_API_KEY": "", "OPENROUTER_API_KEY": "", "CUSTOM_API_URL": ""},
             clear=True,
         ):
-            with pytest.raises(ValueError, match="At least one API configuration is required"):
-                configure_providers()
+            configure_providers()
+
+            assert ModelProviderRegistry.get_available_providers() == []
+            tool_names = {tool.name for tool in await handle_list_tools()}
+            assert {"listmodels", "version"} <= tool_names
+
+            result = await handle_call_tool("listmodels", {})
+            payload = json.loads(result[0].text)
+            assert payload["status"] == "success"
+            assert "**Configured Providers**: 0" in payload["content"]
