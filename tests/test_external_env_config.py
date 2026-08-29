@@ -19,7 +19,7 @@ MODEL_ALLOWLISTS = {
     "GOOGLE_ALLOWED_MODELS": "gemini-3.1-pro-preview",
     "ANTHROPIC_ALLOWED_MODELS": "claude-fable-5",
     "XAI_ALLOWED_MODELS": "grok-4.6",
-    "FACTORY_ALLOWED_MODELS": "kimi-k3",
+    "FACTORY_ALLOWED_MODELS": "deepseek-v4-pro",
 }
 
 

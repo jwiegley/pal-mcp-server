@@ -34,7 +34,7 @@ OPENAI_ALLOWED_MODELS=gpt-5.6-sol
 GOOGLE_ALLOWED_MODELS=gemini-3.1-pro-preview
 ANTHROPIC_ALLOWED_MODELS=claude-fable-5
 XAI_ALLOWED_MODELS=grok-4.6
-FACTORY_ALLOWED_MODELS=kimi-k3
+FACTORY_ALLOWED_MODELS=deepseek-v4-pro
 ```
 
 Never commit or paste this file.
@@ -97,7 +97,7 @@ CUSTOM_MODEL_NAME=llama3.2                          # Default model
 
 **Default Model Selection:**
 ```env
-# Options: 'auto', 'gpt-5.6-sol', 'gemini-3.1-pro-preview', 'claude-fable-5', 'grok-4.6', 'kimi-k3', etc.
+# Options: 'auto', 'gpt-5.6-sol', 'gemini-3.1-pro-preview', 'claude-fable-5', 'grok-4.6', 'deepseek-v4-pro', etc.
 DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 ```
 
@@ -121,7 +121,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   | Gemini | `gemini-3.1-pro-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
   | Anthropic | `claude-fable-5`, `claude-opus-5`, `claude-opus-4-8`, `claude-sonnet-5`, and other entries in the manifest | `fable`, `fable-5`, `opus`, `sonnet` |
   | X.AI | `grok-4.6`, `grok-4`, `grok-4-1-fast-reasoning` | `grok46`, `grok`, `grok4`, `grok-4.1-fast-reasoning` |
-  | Factory | PAL `kimi-k3` → Droid `moonshotai/kimi-k3` | Exact PAL model name only |
+  | Factory | `deepseek-v4-pro` through Droid SDK | Exact model name only |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
 
@@ -220,7 +220,7 @@ GOOGLE_ALLOWED_MODELS=flash,pro
 XAI_ALLOWED_MODELS=grok-4.6,grok-4
 
 # Factory Droid SDK model restrictions
-FACTORY_ALLOWED_MODELS=kimi-k3
+FACTORY_ALLOWED_MODELS=deepseek-v4-pro
 
 # OpenRouter model restrictions (affects models via custom provider)
 OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
@@ -250,7 +250,7 @@ GOOGLE_ALLOWED_MODELS=pro
 GOOGLE_ALLOWED_MODELS=flash,pro
 OPENAI_ALLOWED_MODELS=gpt-5.6-luna,gpt-5-mini,o4-mini
 XAI_ALLOWED_MODELS=grok-4.6,grok
-FACTORY_ALLOWED_MODELS=kimi-k3
+FACTORY_ALLOWED_MODELS=deepseek-v4-pro
 ```
 
 ### Advanced Configuration

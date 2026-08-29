@@ -7,11 +7,11 @@
   },
   "models": [
     {
-      "model_name": "kimi-k3",
-      "friendly_name": "Factory (Kimi K3)",
+      "model_name": "deepseek-v4-pro",
+      "friendly_name": "Factory (DeepSeek V4 Pro)",
       "aliases": [],
       "intelligence_score": 18,
-      "description": "Kimi K3 through Factory Droid SDK (upstream moonshotai/kimi-k3); conservative 200K PAL context budget",
+      "description": "DeepSeek V4 Pro through Factory Droid SDK; conservative 200K PAL context budget",
       "context_window": 200000,
       "max_output_tokens": 16384,
       "supports_extended_thinking": true,
@@ -20,7 +20,7 @@
       "supports_streaming": true,
       "supports_function_calling": false,
       "supports_json_mode": false,
-      "supports_images": true,
+      "supports_images": false,
       "supports_temperature": false,
       "max_image_size_mb": 5.0
     }

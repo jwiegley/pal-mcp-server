@@ -20,7 +20,7 @@ Example:
     GOOGLE_ALLOWED_MODELS=flash
     XAI_ALLOWED_MODELS=grok-4,grok-4.1-fast-reasoning
     ANTHROPIC_ALLOWED_MODELS=claude-fable-5
-    FACTORY_ALLOWED_MODELS=kimi-k3
+    FACTORY_ALLOWED_MODELS=deepseek-v4-pro
     OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
 """
 

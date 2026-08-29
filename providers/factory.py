@@ -27,8 +27,7 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
     REGISTRY_CLASS = FactoryModelRegistry
     MODEL_CAPABILITIES: ClassVar[dict[str, ModelCapabilities]] = {}
 
-    PRIMARY_MODEL = "kimi-k3"
-    UPSTREAM_MODEL = "moonshotai/kimi-k3"
+    PRIMARY_MODEL = "deepseek-v4-pro"
     REQUEST_TIMEOUT_SECONDS = 600.0
 
     THINKING_EFFORT = {
@@ -110,7 +109,7 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
                     lambda: asyncio.run(
                         self._run_droid(
                             prompt=prompt,
-                            model_name=self.UPSTREAM_MODEL,
+                            model_name=resolved_model,
                             system_prompt=system_prompt,
                             thinking_mode=thinking_mode,
                             images=images if capabilities.supports_images else None,

@@ -36,31 +36,30 @@ class TestFactoryProvider:
 
     def test_exact_model_capabilities_and_fail_closed_resolution(self):
         provider = FactoryModelProvider("test-key")
-        capabilities = provider.get_capabilities("kimi-k3")
+        capabilities = provider.get_capabilities("deepseek-v4-pro")
 
         assert provider.get_provider_type() == ProviderType.FACTORY
-        assert capabilities.model_name == "kimi-k3"
+        assert capabilities.model_name == "deepseek-v4-pro"
         assert capabilities.provider == ProviderType.FACTORY
         assert capabilities.context_window == 200_000
         assert capabilities.max_output_tokens == 16_384
         assert capabilities.default_reasoning_effort == "high"
         assert capabilities.supports_extended_thinking is True
-        assert capabilities.supports_images is True
+        assert capabilities.supports_images is False
         assert capabilities.supports_temperature is False
-        assert provider.list_models(respect_restrictions=False) == ["kimi-k3"]
-        assert provider.validate_model_name("kimi-k2.5") is False
-        assert provider.UPSTREAM_MODEL == "moonshotai/kimi-k3"
+        assert provider.list_models(respect_restrictions=False) == ["deepseek-v4-pro"]
+        assert provider.validate_model_name("kimi-k3") is False
 
     @patch.dict(os.environ, {}, clear=True)
     def test_registry_routes_exact_model_without_requiring_environment_key(self):
         ModelProviderRegistry.reset_for_testing()
         try:
             ModelProviderRegistry.register_provider(ProviderType.FACTORY, FactoryModelProvider)
-            provider = ModelProviderRegistry.get_provider_for_model("kimi-k3")
+            provider = ModelProviderRegistry.get_provider_for_model("deepseek-v4-pro")
 
             assert isinstance(provider, FactoryModelProvider)
             assert provider.api_key == ""
-            assert ModelProviderRegistry.get_provider_for_model("kimi-k2.5") is None
+            assert ModelProviderRegistry.get_provider_for_model("kimi-k3") is None
         finally:
             ModelProviderRegistry.reset_for_testing()
 
@@ -70,7 +69,7 @@ class TestFactoryProvider:
 
         utils.model_restrictions._restriction_service = None
         provider = FactoryModelProvider("test-key")
-        assert provider.validate_model_name("kimi-k3") is False
+        assert provider.validate_model_name("deepseek-v4-pro") is False
 
     @patch.dict(
         os.environ,
@@ -90,13 +89,13 @@ class TestFactoryProvider:
 
         response = FactoryModelProvider("factory-secret").generate_content(
             prompt="Review this code",
-            model_name="kimi-k3",
+            model_name="deepseek-v4-pro",
             system_prompt="Be precise",
             thinking_mode="max",
         )
 
         call = sdk_run.await_args.kwargs
-        assert call["model"] == "moonshotai/kimi-k3"
+        assert call["model"] == "deepseek-v4-pro"
         assert call["reasoning_effort"].value == "max"
         assert call["api_key"] == "factory-secret"
         assert call["runtime"].executable == Path("/nix/store/test-droid/bin/droid")
@@ -109,7 +108,7 @@ class TestFactoryProvider:
         assert call["config"].auto_reject_permission_requests is True
         assert call["config"].restrict_tools == frozenset()
         assert response.content == "Factory response"
-        assert response.model_name == "kimi-k3"
+        assert response.model_name == "deepseek-v4-pro"
         assert response.provider == ProviderType.FACTORY
         assert response.usage == {
             "input_tokens": 10,
@@ -123,7 +122,7 @@ class TestFactoryProvider:
     def test_local_droid_auth_state_is_preserved_without_api_key(self, sdk_run):
         sdk_run.return_value = successful_result()
 
-        FactoryModelProvider().generate_content(prompt="hello", model_name="kimi-k3")
+        FactoryModelProvider().generate_content(prompt="hello", model_name="deepseek-v4-pro")
 
         call = sdk_run.await_args.kwargs
         assert call["api_key"] is None
@@ -131,8 +130,8 @@ class TestFactoryProvider:
 
     @patch("droid_sdk.run", new_callable=AsyncMock)
     def test_invalid_model_never_reaches_sdk(self, sdk_run):
-        with pytest.raises(ValueError, match="Unsupported model 'kimi-k2.5' for provider factory"):
-            FactoryModelProvider("factory-secret").generate_content(prompt="hello", model_name="kimi-k2.5")
+        with pytest.raises(ValueError, match="Unsupported model 'kimi-k3' for provider factory"):
+            FactoryModelProvider("factory-secret").generate_content(prompt="hello", model_name="kimi-k3")
 
         sdk_run.assert_not_awaited()
 
@@ -142,9 +141,9 @@ class TestFactoryProvider:
         sdk_run.side_effect = RuntimeError(f"authentication failed for {secret}")
 
         with pytest.raises(RuntimeError) as error:
-            FactoryModelProvider(secret).generate_content(prompt="hello", model_name="kimi-k3")
+            FactoryModelProvider(secret).generate_content(prompt="hello", model_name="deepseek-v4-pro")
 
         assert "[REDACTED]" in str(error.value)
         assert secret not in str(error.value)
-        assert "kimi-k3" in str(error.value)
+        assert "deepseek-v4-pro" in str(error.value)
         assert secret not in "".join(traceback.format_exception(error.value))
