@@ -117,12 +117,20 @@ class TestFactoryProvider:
             "total_tokens": 15,
         }
 
-    @patch.dict(os.environ, {"HOME": "/tmp/factory-home"}, clear=True)
+    @patch.dict(
+        os.environ,
+        {
+            "HOME": "/tmp/factory-home",
+            "FACTORY_API_KEY": "ambient-decoy",
+            "PAL_FACTORY_DROID_LOCAL_AUTH": "true",
+        },
+        clear=True,
+    )
     @patch("droid_sdk.run", new_callable=AsyncMock)
-    def test_local_droid_auth_state_is_preserved_without_api_key(self, sdk_run):
+    def test_local_droid_auth_ignores_explicit_api_key(self, sdk_run):
         sdk_run.return_value = successful_result()
 
-        FactoryModelProvider().generate_content(prompt="hello", model_name="deepseek-v4-pro")
+        FactoryModelProvider("argument-decoy").generate_content(prompt="hello", model_name="deepseek-v4-pro")
 
         call = sdk_run.await_args.kwargs
         assert call["api_key"] is None

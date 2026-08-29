@@ -6,7 +6,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, ClassVar, Optional
 
-from utils.env import get_env
+from utils.env import get_env, get_env_bool
 from utils.image_utils import validate_image
 
 if TYPE_CHECKING:
@@ -179,15 +179,18 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
             timeout=self.REQUEST_TIMEOUT_SECONDS,
             config=config,
             runtime=runtime,
-            api_key=self.api_key or None,
+            api_key=None if get_env_bool("PAL_FACTORY_DROID_LOCAL_AUTH") else (self.api_key or None),
         )
 
     def _droid_environment(self) -> dict[str, str]:
-        return {
+        environment = {
             name: value
             for name, value in os.environ.items()
             if name in self.DROID_PROCESS_ENVIRONMENT or name.startswith("FACTORY_") or name.startswith("LC_")
         }
+        if get_env_bool("PAL_FACTORY_DROID_LOCAL_AUTH"):
+            environment.pop("FACTORY_API_KEY", None)
+        return environment
 
     def _redact(self, message: str) -> str:
         return message.replace(self.api_key, "[REDACTED]") if self.api_key else message
