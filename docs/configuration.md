@@ -121,7 +121,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   | Gemini | `gemini-3.1-pro-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
   | Anthropic | `claude-fable-5`, `claude-opus-5`, `claude-opus-4-8`, `claude-sonnet-5`, and other entries in the manifest | `fable`, `fable-5`, `opus`, `sonnet` |
   | X.AI | `grok-4.6`, `grok-4`, `grok-4-1-fast-reasoning` | `grok46`, `grok`, `grok4`, `grok-4.1-fast-reasoning` |
-  | Factory | `kimi-k3` through Droid SDK | Exact model name only |
+  | Factory | PAL `kimi-k3` → Droid `moonshotai/kimi-k3` | Exact PAL model name only |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
 

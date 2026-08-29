@@ -49,6 +49,7 @@ class TestFactoryProvider:
         assert capabilities.supports_temperature is False
         assert provider.list_models(respect_restrictions=False) == ["kimi-k3"]
         assert provider.validate_model_name("kimi-k2.5") is False
+        assert provider.UPSTREAM_MODEL == "moonshotai/kimi-k3"
 
     @patch.dict(os.environ, {}, clear=True)
     def test_registry_routes_exact_model_without_requiring_environment_key(self):
@@ -95,7 +96,7 @@ class TestFactoryProvider:
         )
 
         call = sdk_run.await_args.kwargs
-        assert call["model"] == "kimi-k3"
+        assert call["model"] == "moonshotai/kimi-k3"
         assert call["reasoning_effort"].value == "max"
         assert call["api_key"] == "factory-secret"
         assert call["runtime"].executable == Path("/nix/store/test-droid/bin/droid")

@@ -11,7 +11,7 @@
       "friendly_name": "Factory (Kimi K3)",
       "aliases": [],
       "intelligence_score": 18,
-      "description": "Kimi K3 through Factory Droid SDK; conservative 200K PAL context budget",
+      "description": "Kimi K3 through Factory Droid SDK (upstream moonshotai/kimi-k3); conservative 200K PAL context budget",
       "context_window": 200000,
       "max_output_tokens": 16384,
       "supports_extended_thinking": true,
