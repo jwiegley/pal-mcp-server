@@ -476,7 +476,7 @@ def configure_providers():
 
     factory_key = get_env("FACTORY_API_KEY")
     factory_key_configured = bool(factory_key and factory_key != "your_factory_api_key_here")
-    factory_local_auth = (get_env("PAL_FACTORY_DROID_LOCAL_AUTH", "") or "").lower() in {"1", "true", "yes"}
+    factory_local_auth = (get_env("PAL_FACTORY_DROID_USE_LOCAL_LOGIN", "") or "").lower() in {"1", "true", "yes"}
     factory_auth_configured = factory_key_configured or factory_local_auth
     managed_droid_executable = get_env("PAL_DROID_EXECUTABLE")
     droid_executable = managed_droid_executable or (shutil.which("droid") if factory_auth_configured else None)

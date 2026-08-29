@@ -122,7 +122,7 @@ class TestFactoryProvider:
         {
             "HOME": "/tmp/factory-home",
             "FACTORY_API_KEY": "ambient-decoy",
-            "PAL_FACTORY_DROID_LOCAL_AUTH": "true",
+            "PAL_FACTORY_DROID_USE_LOCAL_LOGIN": "true",
         },
         clear=True,
     )

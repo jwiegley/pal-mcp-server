@@ -13,7 +13,7 @@ PROVIDER_KEYS = {
     "ANTHROPIC_API_KEY": "anthropic-sentinel",
     "XAI_API_KEY": "xai-sentinel",
     "FACTORY_API_KEY": "factory-sentinel",
-    "PAL_FACTORY_DROID_LOCAL_AUTH": "true",
+    "PAL_FACTORY_DROID_USE_LOCAL_LOGIN": "true",
 }
 MODEL_ALLOWLISTS = {
     "OPENAI_ALLOWED_MODELS": "gpt-5.6-sol",

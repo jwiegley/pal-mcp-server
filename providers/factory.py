@@ -179,7 +179,7 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
             timeout=self.REQUEST_TIMEOUT_SECONDS,
             config=config,
             runtime=runtime,
-            api_key=None if get_env_bool("PAL_FACTORY_DROID_LOCAL_AUTH") else (self.api_key or None),
+            api_key=None if get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN") else (self.api_key or None),
         )
 
     def _droid_environment(self) -> dict[str, str]:
@@ -188,7 +188,7 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
             for name, value in os.environ.items()
             if name in self.DROID_PROCESS_ENVIRONMENT or name.startswith("FACTORY_") or name.startswith("LC_")
         }
-        if get_env_bool("PAL_FACTORY_DROID_LOCAL_AUTH"):
+        if get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN"):
             environment.pop("FACTORY_API_KEY", None)
         return environment
 
