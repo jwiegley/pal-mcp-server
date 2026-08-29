@@ -321,6 +321,7 @@ class TestAutoModeProviderSelection:
                 ("mini", ProviderType.OPENAI, "gpt-5-mini"),  # "mini" now resolves to gpt-5-mini
                 ("o3mini", ProviderType.OPENAI, "o3-mini"),
                 ("grok", ProviderType.XAI, "grok-4"),
+                ("grok-4.6", ProviderType.XAI, "grok-4.6"),
                 ("grok-4.1-fast-reasoning", ProviderType.XAI, "grok-4-1-fast-reasoning"),
             ]
 

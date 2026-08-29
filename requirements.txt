@@ -2,9 +2,9 @@ mcp>=1.0.0,<2  # mcp 2.0 removed the low-level Server decorator API used in serv
 google-genai>=1.19.0
 openai>=1.55.2  # Minimum version for httpx 0.28.0 compatibility
 anthropic>=0.40.0  # Direct Anthropic Messages API support
+droid-sdk>=0.4.0  # Factory models through the local Droid CLI
 pydantic>=2.0.0
 python-dotenv>=1.0.0
-importlib-resources>=5.0.0; python_version<"3.9"
 
 # Development dependencies (install with pip install -r requirements-dev.txt)
 # pytest>=7.4.0

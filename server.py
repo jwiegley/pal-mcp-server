@@ -391,6 +391,7 @@ def configure_providers():
         "GEMINI_API_KEY",
         "XAI_API_KEY",
         "ANTHROPIC_API_KEY",
+        "FACTORY_API_KEY",
         "CUSTOM_API_URL",
     ]
     for key in api_keys_to_check:
@@ -401,6 +402,7 @@ def configure_providers():
     from providers.azure_openai import AzureOpenAIProvider
     from providers.custom import CustomProvider
     from providers.dial import DIALModelProvider
+    from providers.factory import FactoryModelProvider
     from providers.gemini import GeminiModelProvider
     from providers.openai import OpenAIModelProvider
     from providers.openrouter import OpenRouterProvider
@@ -412,6 +414,7 @@ def configure_providers():
     has_native_apis = False
     has_openrouter = False
     has_custom = False
+    has_factory = False
 
     # Check for Gemini API key
     gemini_key = get_env("GEMINI_API_KEY")
@@ -467,6 +470,22 @@ def configure_providers():
         valid_providers.append("Anthropic")
         has_native_apis = True
         logger.info("Anthropic API key found - Claude models available")
+
+    # Factory can authenticate through an environment key or mutable Droid CLI state.
+    import shutil
+
+    factory_key = get_env("FACTORY_API_KEY")
+    factory_key_configured = bool(factory_key and factory_key != "your_factory_api_key_here")
+    factory_local_auth = (get_env("PAL_FACTORY_DROID_LOCAL_AUTH", "") or "").lower() in {"1", "true", "yes"}
+    factory_auth_configured = factory_key_configured or factory_local_auth
+    managed_droid_executable = get_env("PAL_DROID_EXECUTABLE")
+    droid_executable = managed_droid_executable or (shutil.which("droid") if factory_auth_configured else None)
+    if factory_auth_configured and droid_executable:
+        valid_providers.append("Factory (Droid SDK)")
+        has_factory = True
+        logger.info("Droid runtime and Factory authentication configuration found")
+    elif factory_auth_configured:
+        logger.warning("Factory authentication is configured but the Droid CLI is unavailable")
 
     # Check for DIAL API key
     dial_key = get_env("DIAL_API_KEY")
@@ -535,7 +554,13 @@ def configure_providers():
             registered_providers.append(ProviderType.DIAL.value)
             logger.debug(f"Registered provider: {ProviderType.DIAL.value}")
 
-    # 2. Custom provider second (for local/private models)
+    # 2. Factory uses Droid CLI auth or an environment key.
+    if has_factory:
+        ModelProviderRegistry.register_provider(ProviderType.FACTORY, FactoryModelProvider)
+        registered_providers.append(ProviderType.FACTORY.value)
+        logger.debug(f"Registered provider: {ProviderType.FACTORY.value}")
+
+    # 3. Custom provider for local/private models
     if has_custom:
         # Factory function that creates CustomProvider with proper parameters
         def custom_provider_factory(api_key=None):
@@ -547,7 +572,7 @@ def configure_providers():
         registered_providers.append(ProviderType.CUSTOM.value)
         logger.debug(f"Registered provider: {ProviderType.CUSTOM.value}")
 
-    # 3. OpenRouter last (catch-all for everything else)
+    # 4. OpenRouter last (catch-all for everything else)
     if has_openrouter:
         ModelProviderRegistry.register_provider(ProviderType.OPENROUTER, OpenRouterProvider)
         registered_providers.append(ProviderType.OPENROUTER.value)
@@ -562,8 +587,8 @@ def configure_providers():
     if not valid_providers:
         logger.warning(
             "No model provider configured; set GEMINI_API_KEY, OPENAI_API_KEY, "
-            "XAI_API_KEY, ANTHROPIC_API_KEY, DIAL_API_KEY, OPENROUTER_API_KEY, "
-            "or CUSTOM_API_URL to enable provider-backed tools"
+            "XAI_API_KEY, ANTHROPIC_API_KEY, FACTORY_API_KEY, DIAL_API_KEY, "
+            "OPENROUTER_API_KEY, CUSTOM_API_URL, or authenticate Droid CLI"
         )
         return
 
@@ -573,6 +598,8 @@ def configure_providers():
     priority_info = []
     if has_native_apis:
         priority_info.append("Native APIs (Gemini, OpenAI)")
+    if has_factory:
+        priority_info.append("Factory Droid SDK")
     if has_custom:
         priority_info.append("Custom endpoints")
     if has_openrouter:
@@ -620,6 +647,7 @@ def configure_providers():
             ProviderType.OPENAI,
             ProviderType.XAI,
             ProviderType.ANTHROPIC,
+            ProviderType.FACTORY,
             ProviderType.DIAL,
         ]
         for provider_type in provider_types_to_validate:
@@ -640,7 +668,7 @@ def configure_providers():
         if not available_models:
             logger.error(
                 "Auto mode is enabled but no models are available after applying restrictions. "
-                "Please check your OPENAI_ALLOWED_MODELS and GOOGLE_ALLOWED_MODELS settings."
+                "Please check the configured provider allowlists."
             )
             raise ValueError(
                 "No models available for auto mode due to restrictions. "

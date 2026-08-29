@@ -11,6 +11,7 @@ Environment Variables:
 - GOOGLE_ALLOWED_MODELS: Comma-separated list of allowed Gemini models
 - XAI_ALLOWED_MODELS: Comma-separated list of allowed X.AI GROK models
 - ANTHROPIC_ALLOWED_MODELS: Comma-separated list of allowed Anthropic Claude models
+- FACTORY_ALLOWED_MODELS: Comma-separated list of allowed Factory Droid models
 - OPENROUTER_ALLOWED_MODELS: Comma-separated list of allowed OpenRouter models
 - DIAL_ALLOWED_MODELS: Comma-separated list of allowed DIAL models
 
@@ -18,7 +19,8 @@ Example:
     OPENAI_ALLOWED_MODELS=o3-mini,o4-mini
     GOOGLE_ALLOWED_MODELS=flash
     XAI_ALLOWED_MODELS=grok-4,grok-4.1-fast-reasoning
-    ANTHROPIC_ALLOWED_MODELS=claude-opus-4-8,claude-sonnet-4-6
+    ANTHROPIC_ALLOWED_MODELS=claude-fable-5
+    FACTORY_ALLOWED_MODELS=kimi-k3
     OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
 """
 
@@ -55,6 +57,7 @@ class ModelRestrictionService:
         ProviderType.GOOGLE: "GOOGLE_ALLOWED_MODELS",
         ProviderType.XAI: "XAI_ALLOWED_MODELS",
         ProviderType.ANTHROPIC: "ANTHROPIC_ALLOWED_MODELS",
+        ProviderType.FACTORY: "FACTORY_ALLOWED_MODELS",
         ProviderType.OPENROUTER: "OPENROUTER_ALLOWED_MODELS",
         ProviderType.DIAL: "DIAL_ALLOWED_MODELS",
     }

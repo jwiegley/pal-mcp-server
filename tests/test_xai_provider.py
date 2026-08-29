@@ -45,6 +45,7 @@ class TestXAIProvider:
         provider = XAIModelProvider("test-key")
 
         # Test valid models
+        assert provider.validate_model_name("grok-4.6") is True
         assert provider.validate_model_name("grok-4") is True
         assert provider.validate_model_name("grok4") is True
         assert provider.validate_model_name("grok") is True
@@ -68,6 +69,8 @@ class TestXAIProvider:
         provider = XAIModelProvider("test-key")
 
         # Test shorthand resolution
+        assert provider._resolve_model_name("grok46") == "grok-4.6"
+        assert provider._resolve_model_name("grok-4.6") == "grok-4.6"
         assert provider._resolve_model_name("grok") == "grok-4"
         assert provider._resolve_model_name("grok4") == "grok-4"
         assert provider._resolve_model_name("grok-4.1-fast-reasoning") == "grok-4-1-fast-reasoning"
@@ -112,6 +115,23 @@ class TestXAIProvider:
         assert capabilities.supports_json_mode is True
         assert capabilities.supports_images is True
 
+    def test_get_capabilities_grok4_6(self):
+        """Grok 4.6 metadata matches the xAI model contract."""
+        capabilities = XAIModelProvider("test-key").get_capabilities("grok-4.6")
+
+        assert capabilities.model_name == "grok-4.6"
+        assert capabilities.friendly_name == "X.AI (Grok 4.6)"
+        assert capabilities.context_window == 500_000
+        assert capabilities.max_output_tokens == 0
+        assert capabilities.default_reasoning_effort == "high"
+        assert capabilities.provider == ProviderType.XAI
+        assert capabilities.supports_extended_thinking is True
+        assert capabilities.supports_function_calling is True
+        assert capabilities.supports_json_mode is True
+        assert capabilities.supports_images is True
+        assert capabilities.supports_temperature is False
+        assert capabilities.use_openai_response_api is True
+
     def test_get_capabilities_with_shorthand(self):
         """Test getting model capabilities with shorthand."""
         provider = XAIModelProvider("test-key")
@@ -135,6 +155,8 @@ class TestXAIProvider:
         provider = XAIModelProvider("test-key")
 
         thinking_aliases = [
+            "grok-4.6",
+            "grok46",
             "grok-4",
             "grok",
             "grok4",
@@ -236,11 +258,20 @@ class TestXAIProvider:
         provider = XAIModelProvider("test-key")
 
         # Check that all expected base models are present
+        assert "grok-4.6" in provider.MODEL_CAPABILITIES
         assert "grok-4" in provider.MODEL_CAPABILITIES
         assert "grok-4-1-fast-reasoning" in provider.MODEL_CAPABILITIES
 
         # Check model configs have required fields
         from providers.shared import ModelCapabilities
+
+        grok46_config = provider.MODEL_CAPABILITIES["grok-4.6"]
+        assert grok46_config.context_window == 500_000
+        assert grok46_config.max_output_tokens == 0
+        assert grok46_config.default_reasoning_effort == "high"
+        assert grok46_config.supports_temperature is False
+        assert grok46_config.use_openai_response_api is True
+        assert "grok46" in grok46_config.aliases
 
         grok4_config = provider.MODEL_CAPABILITIES["grok-4"]
         assert isinstance(grok4_config, ModelCapabilities)
@@ -352,3 +383,37 @@ class TestXAIProvider:
         provider.generate_content(prompt="Test", model_name="grok-4.1-fast", temperature=0.7)
         call_kwargs = mock_client.chat.completions.create.call_args[1]
         assert call_kwargs["model"] == "grok-4-1-fast-reasoning"
+
+    @patch("providers.openai_compatible.OpenAI")
+    def test_grok_4_6_uses_responses_api_with_exact_model_and_effort(self, mock_openai_class):
+        """Grok 4.6 must use xAI Responses with the exact ID and mapped effort."""
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.output_text = "Grok response"
+        mock_response.model = "grok-4.6"
+        mock_response.id = "response-id"
+        mock_response.created_at = 1234567890
+        mock_response.usage = None
+        mock_client.responses.create.return_value = mock_response
+
+        result = XAIModelProvider("test-key").generate_content(
+            prompt="Test prompt",
+            model_name="grok-4.6",
+            system_prompt="System prompt",
+            thinking_mode="max",
+        )
+
+        mock_client.chat.completions.create.assert_not_called()
+        call_kwargs = mock_client.responses.create.call_args.kwargs
+        assert call_kwargs["model"] == "grok-4.6"
+        assert call_kwargs["reasoning"] == {"effort": "xhigh"}
+        assert call_kwargs["store"] is True
+        assert call_kwargs["input"] == [
+            {"role": "user", "content": [{"type": "input_text", "text": "System prompt"}]},
+            {"role": "user", "content": [{"type": "input_text", "text": "Test prompt"}]},
+        ]
+        assert "temperature" not in call_kwargs
+        assert result.content == "Grok response"
+        assert result.model_name == "grok-4.6"
+        assert result.metadata["endpoint"] == "responses"

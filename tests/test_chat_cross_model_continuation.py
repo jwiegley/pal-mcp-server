@@ -67,6 +67,7 @@ async def test_chat_cross_model_continuation(monkeypatch, tmp_path):
         "XAI_API_KEY",
         "OPENROUTER_API_KEY",
         "ANTHROPIC_API_KEY",
+        "FACTORY_API_KEY",
         "MISTRAL_API_KEY",
         "CUSTOM_API_KEY",
         "CUSTOM_API_URL",

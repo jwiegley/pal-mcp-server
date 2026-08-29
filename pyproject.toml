@@ -2,12 +2,13 @@
 name = "pal-mcp-server"
 version = "1.5.0"
 description = "AI-powered MCP server with multiple model providers"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0,<2",
     "google-genai>=1.19.0",
     "openai>=1.55.2",
     "anthropic>=0.40.0",
+    "droid-sdk>=0.4.0",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
 ]
@@ -30,8 +31,10 @@ py-modules = ["server", "config"]
     "conf/custom_models.json",
     "conf/openrouter_models.json",
     "conf/azure_models.json",
+    "conf/anthropic_models.json",
     "conf/openai_models.json",
     "conf/gemini_models.json",
+    "conf/factory_models.json",
     "conf/xai_models.json",
     "conf/dial_models.json",
 ]

@@ -184,12 +184,21 @@ def clear_model_restriction_env(monkeypatch):
         "GOOGLE_ALLOWED_MODELS",
         "XAI_ALLOWED_MODELS",
         "ANTHROPIC_ALLOWED_MODELS",
+        "FACTORY_ALLOWED_MODELS",
         "OPENROUTER_ALLOWED_MODELS",
         "DIAL_ALLOWED_MODELS",
     ]
 
     for var in restriction_vars:
         monkeypatch.delenv(var, raising=False)
+
+    import utils.model_restrictions
+
+    utils.model_restrictions._restriction_service = None
+    try:
+        yield
+    finally:
+        utils.model_restrictions._restriction_service = None
 
 
 @pytest.fixture(autouse=True)
@@ -217,4 +226,4 @@ def disable_force_env_override(monkeypatch):
     try:
         yield
     finally:
-        env_config.reload_env()
+        env_config.reload_env({"PAL_MCP_FORCE_ENV_OVERRIDE": "false"})

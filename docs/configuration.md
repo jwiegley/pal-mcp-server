@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This guide covers all configuration options for the PAL MCP Server. The server is configured through environment variables defined in your `.env` file.
+This guide covers PAL MCP Server configuration through explicit environment variables, the strict cross-platform `$XDG_CONFIG_HOME/pal-mcp/config` file, and the legacy project-root `.env` fallback.
 
 ## Quick Start Configuration
 
@@ -12,6 +12,32 @@ DEFAULT_MODEL=auto
 GEMINI_API_KEY=your-gemini-key
 OPENAI_API_KEY=your-openai-key
 ```
+
+### External credential configuration
+
+For immutable or packaged installations, place provider credentials and optional model allowlists in:
+
+```text
+$XDG_CONFIG_HOME/pal-mcp/config
+```
+
+The file must be a regular, non-symlink, single-link file owned by the current user with mode `0600`; its parent directory must be user-owned and not group- or world-writable. PAL parses `NAME=value` lines without shell evaluation. Explicit process environment variables take precedence. Supported names are:
+
+```dotenv
+OPENAI_API_KEY=<value>
+GEMINI_API_KEY=<value>
+ANTHROPIC_API_KEY=<value>
+XAI_API_KEY=<value>
+FACTORY_API_KEY=<value>
+
+OPENAI_ALLOWED_MODELS=gpt-5.6-sol
+GOOGLE_ALLOWED_MODELS=gemini-3.1-pro-preview
+ANTHROPIC_ALLOWED_MODELS=claude-fable-5
+XAI_ALLOWED_MODELS=grok-4.6
+FACTORY_ALLOWED_MODELS=kimi-k3
+```
+
+Never commit or paste this file.
 
 ## Complete Configuration Reference
 
@@ -37,6 +63,14 @@ OPENAI_API_KEY=your_openai_api_key_here
 # X.AI GROK API
 XAI_API_KEY=your_xai_api_key_here
 # Get from: https://console.x.ai/
+
+# Anthropic Claude API
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+# Get from: https://console.anthropic.com/
+
+# Factory Droid SDK (an authenticated local Droid CLI also works)
+FACTORY_API_KEY=your_factory_api_key_here
+# Droid must be installed; set PAL_DROID_EXECUTABLE when it is not on PATH.
 ```
 
 **Option 2: OpenRouter (Access multiple models through one API)**
@@ -63,14 +97,16 @@ CUSTOM_MODEL_NAME=llama3.2                          # Default model
 
 **Default Model Selection:**
 ```env
-# Options: 'auto', 'pro', 'flash', 'gpt-5.6', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'o3', 'o3-mini', 'o4-mini', etc.
+# Options: 'auto', 'gpt-5.6-sol', 'gemini-3.1-pro-preview', 'claude-fable-5', 'grok-4.6', 'kimi-k3', etc.
 DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 ```
 
 - **Available Models:** The canonical capability data for native providers lives in JSON manifests under `conf/`:
   - `conf/openai_models.json` – OpenAI catalogue (can be overridden with `OPENAI_MODELS_CONFIG_PATH`)
   - `conf/gemini_models.json` – Gemini catalogue (`GEMINI_MODELS_CONFIG_PATH`)
+  - `conf/anthropic_models.json` – Anthropic catalogue (`ANTHROPIC_MODELS_CONFIG_PATH`)
   - `conf/xai_models.json` – X.AI / GROK catalogue (`XAI_MODELS_CONFIG_PATH`)
+  - `conf/factory_models.json` – Factory Droid SDK catalogue (`FACTORY_MODELS_CONFIG_PATH`)
   - `conf/openrouter_models.json` – OpenRouter catalogue (`OPENROUTER_MODELS_CONFIG_PATH`)
   - `conf/dial_models.json` – DIAL aggregation catalogue (`DIAL_MODELS_CONFIG_PATH`)
   - `conf/custom_models.json` – Custom/OpenAI-compatible endpoints (`CUSTOM_MODELS_CONFIG_PATH`)
@@ -82,8 +118,10 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
   | Provider | Canonical Models | Notable Aliases |
   |----------|-----------------|-----------------|
   | OpenAI | `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.5-pro`, `gpt-5.4`, `gpt-5.4-pro`, `gpt-5.3-codex`, `gpt-5.2`, `gpt-5.2-pro`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1`, `gpt-4.1-mini`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` | `gpt-5.6`, `gpt5.6`, `sol`, `terra`, `luna`, `gpt5.5`, `gpt5.4`, `gpt5.2`, `gpt5`, `gpt5pro`, `mini`, `nano`, `codex`, `o3mini`, `o3pro`, `o4mini` |
-  | Gemini | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
-  | X.AI | `grok-4`, `grok-4.1-fast` | `grok`, `grok4`, `grok-4.1-fast-reasoning` |
+  | Gemini | `gemini-3.1-pro-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
+  | Anthropic | `claude-fable-5`, `claude-opus-5`, `claude-opus-4-8`, `claude-sonnet-5`, and other entries in the manifest | `fable`, `fable-5`, `opus`, `sonnet` |
+  | X.AI | `grok-4.6`, `grok-4`, `grok-4-1-fast-reasoning` | `grok46`, `grok`, `grok4`, `grok-4.1-fast-reasoning` |
+  | Factory | `kimi-k3` through Droid SDK | Exact model name only |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
 
@@ -179,7 +217,10 @@ OPENAI_ALLOWED_MODELS=gpt-5.6-luna,gpt-5-mini,o3-mini,o4-mini,mini
 GOOGLE_ALLOWED_MODELS=flash,pro
 
 # X.AI GROK model restrictions
-XAI_ALLOWED_MODELS=grok-4,grok-4.1-fast-reasoning
+XAI_ALLOWED_MODELS=grok-4.6,grok-4
+
+# Factory Droid SDK model restrictions
+FACTORY_ALLOWED_MODELS=kimi-k3
 
 # OpenRouter model restrictions (affects models via custom provider)
 OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
@@ -208,7 +249,8 @@ GOOGLE_ALLOWED_MODELS=pro
 # Balanced selection
 GOOGLE_ALLOWED_MODELS=flash,pro
 OPENAI_ALLOWED_MODELS=gpt-5.6-luna,gpt-5-mini,o4-mini
-XAI_ALLOWED_MODELS=grok,grok-4.1-fast-reasoning
+XAI_ALLOWED_MODELS=grok-4.6,grok
+FACTORY_ALLOWED_MODELS=kimi-k3
 ```
 
 ### Advanced Configuration
@@ -218,7 +260,9 @@ XAI_ALLOWED_MODELS=grok,grok-4.1-fast-reasoning
 # Override default location of built-in catalogues
 OPENAI_MODELS_CONFIG_PATH=/path/to/openai_models.json
 GEMINI_MODELS_CONFIG_PATH=/path/to/gemini_models.json
+ANTHROPIC_MODELS_CONFIG_PATH=/path/to/anthropic_models.json
 XAI_MODELS_CONFIG_PATH=/path/to/xai_models.json
+FACTORY_MODELS_CONFIG_PATH=/path/to/factory_models.json
 OPENROUTER_MODELS_CONFIG_PATH=/path/to/openrouter_models.json
 DIAL_MODELS_CONFIG_PATH=/path/to/dial_models.json
 CUSTOM_MODELS_CONFIG_PATH=/path/to/custom_models.json

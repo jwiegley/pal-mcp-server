@@ -4,6 +4,7 @@ from .anthropic import AnthropicModelRegistry
 from .azure import AzureModelRegistry
 from .custom import CustomEndpointModelRegistry
 from .dial import DialModelRegistry
+from .factory import FactoryModelRegistry
 from .gemini import GeminiModelRegistry
 from .openai import OpenAIModelRegistry
 from .openrouter import OpenRouterModelRegistry
@@ -14,6 +15,7 @@ __all__ = [
     "AzureModelRegistry",
     "CustomEndpointModelRegistry",
     "DialModelRegistry",
+    "FactoryModelRegistry",
     "GeminiModelRegistry",
     "OpenAIModelRegistry",
     "OpenRouterModelRegistry",

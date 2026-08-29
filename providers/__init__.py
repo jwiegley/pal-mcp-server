@@ -3,6 +3,7 @@
 from .anthropic import AnthropicModelProvider
 from .azure_openai import AzureOpenAIProvider
 from .base import ModelProvider
+from .factory import FactoryModelProvider
 from .gemini import GeminiModelProvider
 from .openai import OpenAIModelProvider
 from .openai_compatible import OpenAICompatibleProvider
@@ -17,6 +18,7 @@ __all__ = [
     "ModelProviderRegistry",
     "AnthropicModelProvider",
     "AzureOpenAIProvider",
+    "FactoryModelProvider",
     "GeminiModelProvider",
     "OpenAIModelProvider",
     "OpenAICompatibleProvider",

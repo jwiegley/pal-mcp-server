@@ -51,6 +51,7 @@ async def test_consensus_multi_model_consultations(monkeypatch, openai_model):
         "XAI_API_KEY",
         "OPENROUTER_API_KEY",
         "ANTHROPIC_API_KEY",
+        "FACTORY_API_KEY",
         "MISTRAL_API_KEY",
         "CUSTOM_API_KEY",
         "CUSTOM_API_URL",

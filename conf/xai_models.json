@@ -25,6 +25,27 @@
   },
   "models": [
     {
+      "model_name": "grok-4.6",
+      "friendly_name": "X.AI (Grok 4.6)",
+      "aliases": [
+        "grok46"
+      ],
+      "intelligence_score": 20,
+      "description": "Grok 4.6 (500K context) - Frontier reasoning model for coding, agentic tasks, and knowledge work",
+      "context_window": 500000,
+      "max_output_tokens": 0,
+      "supports_extended_thinking": true,
+      "default_reasoning_effort": "high",
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": false,
+      "use_openai_response_api": true,
+      "max_image_size_mb": 20.0
+    },
+    {
       "model_name": "grok-4",
       "friendly_name": "X.AI (Grok 4)",
       "aliases": [

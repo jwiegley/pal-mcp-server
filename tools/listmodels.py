@@ -2,7 +2,7 @@
 List Models Tool - Display all available models organized by provider
 
 This tool provides a comprehensive view of all AI models available in the system,
-organized by their provider (Gemini, OpenAI, X.AI, OpenRouter, Custom).
+organized by their provider (Gemini, OpenAI, Anthropic, X.AI, Factory, OpenRouter, Custom).
 It shows which providers are configured and what models can be used.
 """
 
@@ -103,6 +103,10 @@ class ListModelsTool(BaseTool):
             ProviderType.AZURE: {"name": "Azure OpenAI", "env_key": "AZURE_OPENAI_API_KEY"},
             ProviderType.XAI: {"name": "X.AI (Grok)", "env_key": "XAI_API_KEY"},
             ProviderType.ANTHROPIC: {"name": "Anthropic Claude", "env_key": "ANTHROPIC_API_KEY"},
+            ProviderType.FACTORY: {
+                "name": "Factory (Droid SDK)",
+                "env_key": "FACTORY_API_KEY or authenticate the Droid CLI",
+            },
             ProviderType.DIAL: {"name": "AI DIAL", "env_key": "DIAL_API_KEY"},
         }
 

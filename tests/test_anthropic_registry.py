@@ -1,9 +1,15 @@
 """Tests for the Anthropic capability registry / manifest."""
 
+import importlib.resources
+
 import pytest
 
 from providers.registries.anthropic import AnthropicModelRegistry
 from providers.shared import ProviderType
+
+
+def test_packaged_manifest_is_available():
+    assert importlib.resources.files("conf").joinpath("anthropic_models.json").is_file()
 
 
 def test_registry_loads_expected_models():

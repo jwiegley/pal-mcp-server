@@ -13,6 +13,7 @@ class ProviderType(Enum):
     AZURE = "azure"
     ANTHROPIC = "anthropic"
     XAI = "xai"
+    FACTORY = "factory"
     OPENROUTER = "openrouter"
     CUSTOM = "custom"
     DIAL = "dial"

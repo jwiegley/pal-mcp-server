@@ -87,11 +87,13 @@ class TestSupportedModelsAliases:
             assert isinstance(config.aliases, list), f"{model_name} aliases must be a list"
 
         # Test specific aliases
+        assert "grok46" in provider.MODEL_CAPABILITIES["grok-4.6"].aliases
         assert "grok" in provider.MODEL_CAPABILITIES["grok-4"].aliases
         assert "grok4" in provider.MODEL_CAPABILITIES["grok-4"].aliases
         assert "grok-4.1-fast-reasoning" in provider.MODEL_CAPABILITIES["grok-4-1-fast-reasoning"].aliases
 
         # Test alias resolution
+        assert provider._resolve_model_name("grok46") == "grok-4.6"
         assert provider._resolve_model_name("grok") == "grok-4"
         assert provider._resolve_model_name("grok4") == "grok-4"
         assert provider._resolve_model_name("grok-4.1-fast-reasoning") == "grok-4-1-fast-reasoning"
@@ -165,6 +167,8 @@ class TestSupportedModelsAliases:
         # Test XAI
         xai_provider = XAIModelProvider("test-key")
         xai_models = xai_provider.list_models(respect_restrictions=False)
+        assert "grok-4.6" in xai_models
+        assert "grok46" in xai_models
         assert "grok-4" in xai_models
         assert "grok" in xai_models
         assert "grok-4.1-fast" in xai_models

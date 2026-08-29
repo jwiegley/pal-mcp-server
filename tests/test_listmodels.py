@@ -46,6 +46,7 @@ class TestListModelsTool:
             assert "Google Gemini ❌" in content
             assert "OpenAI ❌" in content
             assert "X.AI (Grok) ❌" in content
+            assert "Factory (Droid SDK) ❌" in content
             assert "OpenRouter ❌" in content
             assert "Custom/Local API ❌" in content
 
@@ -66,6 +67,17 @@ class TestListModelsTool:
             # Anthropic section renders with a not-configured marker and env key hint
             assert "Anthropic Claude ❌" in content
             assert "ANTHROPIC_API_KEY" in content
+
+    @pytest.mark.asyncio
+    async def test_execute_includes_factory_section(self, tool):
+        """Factory setup is explicit when Droid is not managed for PAL."""
+        with patch.dict(os.environ, {}, clear=True):
+            os.environ["DEFAULT_MODEL"] = "auto"
+            result = await tool.execute({})
+
+        content = json.loads(result[0].text)["content"]
+        assert "Factory (Droid SDK) ❌" in content
+        assert "FACTORY_API_KEY or authenticate the Droid CLI" in content
 
     @pytest.mark.asyncio
     async def test_execute_with_gemini_configured(self, tool):
