@@ -1,5 +1,7 @@
 """Tests for the Anthropic capability registry / manifest."""
 
+import pytest
+
 from providers.registries.anthropic import AnthropicModelRegistry
 from providers.shared import ProviderType
 
@@ -7,6 +9,7 @@ from providers.shared import ProviderType
 def test_registry_loads_expected_models():
     registry = AnthropicModelRegistry()
     models = registry.list_models()
+    assert "claude-fable-5-1" in models
     assert "claude-fable-5" in models
     assert "claude-opus-5" in models
     assert "claude-opus-4-8" in models
@@ -29,6 +32,9 @@ def test_registry_resolves_version_aliases():
     registry = AnthropicModelRegistry()
     assert registry.resolve("fable").model_name == "claude-fable-5"
     assert registry.resolve("fable-5").model_name == "claude-fable-5"
+    assert registry.resolve("fable-5.1").model_name == "claude-fable-5-1"
+    assert registry.resolve("fable-5-1").model_name == "claude-fable-5-1"
+    assert registry.resolve("claude-fable-5.1").model_name == "claude-fable-5-1"
     assert registry.resolve("opus").model_name == "claude-opus-5"
     assert registry.resolve("opus-5").model_name == "claude-opus-5"
     assert registry.resolve("opus-4.8").model_name == "claude-opus-4-8"
@@ -37,10 +43,11 @@ def test_registry_resolves_version_aliases():
     assert registry.resolve("haiku-4.5").model_name == "claude-haiku-4-5-20251001"
 
 
-def test_fable_capabilities():
-    """Fable 5: 1M context, 128K output, adaptive-only thinking (no budget scheme)."""
+@pytest.mark.parametrize("model_name", ["claude-fable-5", "claude-fable-5-1"])
+def test_fable_capabilities(model_name):
+    """Fable: 1M context, 128K output, adaptive-only thinking (no budget scheme)."""
     registry = AnthropicModelRegistry()
-    caps = registry.resolve("claude-fable-5")
+    caps = registry.resolve(model_name)
     assert caps is not None
     assert caps.context_window == 1_000_000
     assert caps.max_output_tokens == 128_000
