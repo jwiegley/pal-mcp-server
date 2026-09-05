@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-09-05)
+
+### Chores
+
+- Sync version to config.py [skip ci]
+  ([`f9170d4`](https://github.com/positron-mark/pal-mcp-server/commit/f9170d4ac8e20f66e4622615024d0dd071cd3418))
+
+### Features
+
+- **anthropic**: Add Claude Fable 5.1
+  ([`8f0626b`](https://github.com/positron-mark/pal-mcp-server/commit/8f0626bd841153272f7c207c8e19beed78beb6b2))
+
+
 ## v1.4.0 (2026-07-31)
 
 ### Bug Fixes
