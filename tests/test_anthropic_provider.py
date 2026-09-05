@@ -189,13 +189,23 @@ class TestAnthropicGenerateContent:
         # Adaptive model: still no temperature, even with thinking off.
         assert "temperature" not in kwargs
 
-    def test_fable_uses_adaptive_thinking_and_no_temperature(self):
+    @pytest.mark.parametrize(
+        ("model_name", "canonical_name"),
+        [
+            ("fable", "claude-fable-5"),
+            ("claude-fable-5-1", "claude-fable-5-1"),
+            ("fable-5.1", "claude-fable-5-1"),
+            ("fable-5-1", "claude-fable-5-1"),
+            ("claude-fable-5.1", "claude-fable-5-1"),
+        ],
+    )
+    def test_fable_uses_adaptive_thinking_and_no_temperature(self, model_name, canonical_name):
         provider, mock_client = self._provider_with_mock_client()
         _wire_stream(mock_client, _make_mock_message())
 
-        provider.generate_content(prompt="think", model_name="fable", temperature=0.5, thinking_mode="max")
+        provider.generate_content(prompt="think", model_name=model_name, temperature=0.5, thinking_mode="max")
         kwargs = mock_client.messages.stream.call_args[1]
-        assert kwargs["model"] == "claude-fable-5"
+        assert kwargs["model"] == canonical_name
         # Fable 5 thinking is always on; adaptive is the only accepted explicit config.
         # budget_tokens and {"type": "disabled"} both 400 on the API.
         assert "thinking" not in kwargs
