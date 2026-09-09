@@ -396,7 +396,7 @@ if __name__ == '__main__':
                 },
             )
 
-            # Final step - skip expert analysis to avoid timeout
+            # Final step triggers expert analysis.
             response3, _ = self.call_mcp_tool_direct(
                 "secaudit",
                 {
@@ -413,23 +413,20 @@ if __name__ == '__main__':
                 },
             )
 
-            if response3:
-                # Check for expert analysis or completion status
-                try:
-                    response_data = json.loads(response3)
-                    status = response_data.get("status", "")
-                    # Either expert analysis is present or the workflow completed directly.
-                    if response_data.get("expert_analysis") or status in ["complete", "security_analysis_complete"]:
-                        self.logger.info("  ✅ Complete audit with expert analysis test passed")
-                        return True
-                except json.JSONDecodeError:
-                    # If not JSON, check for security content (expert analysis output)
-                    if "security" in response3.lower() or "vulnerability" in response3.lower():
-                        self.logger.info("  ✅ Complete audit with expert analysis test passed")
-                        return True
+            if not response3:
+                self.logger.error("Failed to complete audit with expert analysis")
+                return False
+            try:
+                response_data = json.loads(response3)
+            except json.JSONDecodeError:
+                self.logger.error("Expert analysis response was not valid JSON")
+                return False
+            if response_data.get("status") != "calling_expert_analysis" or not response_data.get("expert_analysis"):
+                self.logger.error("Expected expert security analysis")
+                return False
 
-            self.logger.error("Expected expert security analysis or completion")
-            return False
+            self.logger.info("  ✅ Complete audit with expert analysis test passed")
+            return True
 
         except Exception as e:
             self.logger.error(f"Complete audit with analysis test failed: {e}")

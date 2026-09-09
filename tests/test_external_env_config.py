@@ -65,6 +65,24 @@ def test_ambient_environment_takes_precedence(external_config, monkeypatch):
     assert env_config.get_env("OPENAI_API_KEY") == "ambient-sentinel"
 
 
+def test_ambient_credential_takes_precedence_during_legacy_force_override(external_config, monkeypatch, tmp_path):
+    legacy = tmp_path / "legacy.env"
+    legacy.write_text("PAL_MCP_FORCE_ENV_OVERRIDE=true\nOPENAI_API_KEY=legacy-sentinel\n")
+    monkeypatch.setattr(env_config, "_ENV_PATH", legacy)
+    monkeypatch.setenv("OPENAI_API_KEY", "ambient-sentinel")
+    write_config(external_config, {"OPENAI_API_KEY": "external-sentinel"})
+
+    env_config.reload_env()
+
+    assert env_config.get_env("OPENAI_API_KEY") == "ambient-sentinel"
+
+
+@pytest.mark.parametrize("value", ["1", "true", "TRUE", "yes", "YES"])
+def test_boolean_config_accepts_common_true_values(monkeypatch, value):
+    monkeypatch.setenv("PAL_FACTORY_DROID_USE_LOCAL_LOGIN", value)
+    assert env_config.get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN") is True
+
+
 def test_external_config_takes_precedence_over_legacy_dotenv(external_config, monkeypatch, tmp_path):
     legacy = tmp_path / "legacy.env"
     legacy.write_text("OPENAI_API_KEY=legacy-sentinel\nLEGACY_ONLY_SETTING=legacy-model\n")

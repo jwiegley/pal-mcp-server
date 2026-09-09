@@ -6,7 +6,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, ClassVar, Optional
 
-from utils.env import get_env, get_env_bool, suppress_env_vars
+from utils.env import get_env, get_env_bool
 from utils.image_utils import validate_image
 
 if TYPE_CHECKING:
@@ -101,6 +101,10 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
         """Generate one model-only turn through Droid SDK."""
         self.validate_parameters(model_name, temperature)
         capabilities = self.get_capabilities(model_name)
+        if max_output_tokens is not None:
+            raise ValueError("Factory Droid SDK does not support max_output_tokens")
+        if images and not capabilities.supports_images:
+            raise ValueError(f"Factory model {capabilities.model_name} does not support images")
         resolved_model = self._resolve_model_name(model_name)
 
         try:
@@ -112,7 +116,7 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
                             model_name=resolved_model,
                             system_prompt=system_prompt,
                             thinking_mode=thinking_mode,
-                            images=images if capabilities.supports_images else None,
+                            images=images,
                             max_image_size_mb=capabilities.max_image_size_mb,
                         )
                     )
@@ -148,22 +152,25 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
     ):
         try:
             from droid_sdk import Autonomy, Image, ReasoningEffort, Runtime, SessionConfig, run
+            from droid_sdk.transport import ProcessTransport
         except ImportError as exc:
             raise RuntimeError("droid-sdk is not installed") from exc
 
         effort_name = self.THINKING_EFFORT.get(thinking_mode or "", "HIGH")
         attachments = []
         for image_path in images or []:
-            try:
-                image_bytes, media_type = validate_image(image_path, max_image_size_mb)
-                attachments.append(Image.from_bytes(image_bytes, media_type=media_type))
-            except ValueError as exc:
-                logger.warning("Ignoring invalid Factory image input: %s", exc)
+            image_bytes, media_type = validate_image(image_path, max_image_size_mb)
+            attachments.append(Image.from_bytes(image_bytes, media_type=media_type))
 
-        runtime = Runtime(
-            executable=get_env("PAL_DROID_EXECUTABLE") or "droid",
-            env=self._droid_environment(),
-        )
+        executable = get_env("PAL_DROID_EXECUTABLE") or "droid"
+        environment = self._droid_environment()
+        local_login = get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN")
+        if local_login:
+            transport = ProcessTransport(exec_path=executable, cwd=os.getcwd(), env=environment)
+            await transport.connect()
+            runtime = Runtime(transport=transport)
+        else:
+            runtime = Runtime(executable=executable, env=environment)
         config = SessionConfig(
             autonomy=Autonomy.OFF,
             auto_reject_permission_requests=True,
@@ -171,19 +178,16 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
             restrict_tools=(),
             system_prompt=system_prompt or None,
         )
-        local_login = get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN")
-        suppressed = ("FACTORY_API_KEY",) if local_login else ()
-        with suppress_env_vars(*suppressed):
-            return await run(
-                prompt,
-                model=model_name,
-                reasoning_effort=getattr(ReasoningEffort, effort_name),
-                images=attachments,
-                timeout=self.REQUEST_TIMEOUT_SECONDS,
-                config=config,
-                runtime=runtime,
-                api_key=None if local_login else (self.api_key or None),
-            )
+        return await run(
+            prompt,
+            model=model_name,
+            reasoning_effort=getattr(ReasoningEffort, effort_name),
+            images=attachments,
+            timeout=self.REQUEST_TIMEOUT_SECONDS,
+            config=config,
+            runtime=runtime,
+            api_key=None if local_login else (self.api_key or None),
+        )
 
     def _droid_environment(self) -> dict[str, str]:
         environment = {
@@ -192,7 +196,7 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
             if name in self.DROID_PROCESS_ENVIRONMENT or name.startswith("FACTORY_") or name.startswith("LC_")
         }
         if get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN"):
-            environment.pop("FACTORY_API_KEY", None)
+            environment["FACTORY_API_KEY"] = ""
         return environment
 
     def _redact(self, message: str) -> str:

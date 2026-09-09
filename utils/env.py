@@ -36,6 +36,7 @@ _ENV_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
 _MAX_CONFIG_BYTES = 64 * 1024
 
 _DOTENV_VALUES: dict[str, str | None] = {}
+_CREDENTIAL_VALUES: dict[str, str] = {}
 _FORCE_ENV_OVERRIDE = False
 
 
@@ -165,16 +166,18 @@ def _apply_legacy_environment(legacy_values: Mapping[str, str | None], credentia
 
 def reload_env(dotenv_mapping: Mapping[str, str | None] | None = None) -> None:
     """Reload legacy dotenv values and the strict external PAL configuration."""
-    global _DOTENV_VALUES, _FORCE_ENV_OVERRIDE
+    global _CREDENTIAL_VALUES, _DOTENV_VALUES, _FORCE_ENV_OVERRIDE
 
     if dotenv_mapping is not None:
         _DOTENV_VALUES = dict(dotenv_mapping)
+        _CREDENTIAL_VALUES = {}
         _FORCE_ENV_OVERRIDE = _compute_force_override(_DOTENV_VALUES)
         return
 
     legacy_values = _read_dotenv_values()
     credential_values = _read_credential_config()
-    _DOTENV_VALUES = legacy_values | credential_values
+    _DOTENV_VALUES = legacy_values
+    _CREDENTIAL_VALUES = credential_values
     _FORCE_ENV_OVERRIDE = _compute_force_override(legacy_values)
 
     if credential_values:
@@ -193,6 +196,14 @@ def env_override_enabled() -> bool:
 
 def get_env(key: str, default: str | None = None) -> str | None:
     """Retrieve an environment value with ambient environment taking precedence."""
+    if key in _CONFIG_ENV_NAMES:
+        if key in os.environ:
+            return os.environ[key]
+        if key in _CREDENTIAL_VALUES:
+            return _CREDENTIAL_VALUES[key]
+        value = _DOTENV_VALUES.get(key)
+        return value if value is not None else default
+
     if env_override_enabled():
         if key in _DOTENV_VALUES:
             value = _DOTENV_VALUES[key]
@@ -209,12 +220,14 @@ def get_env_bool(key: str, default: bool = False) -> bool:
     """Boolean helper that respects environment precedence."""
     raw_default = "true" if default else "false"
     raw_value = get_env(key, raw_default)
-    return (raw_value or raw_default).strip().lower() == "true"
+    return (raw_value or raw_default).strip().lower() in {"1", "true", "yes"}
 
 
 def get_all_env() -> dict[str, str | None]:
     """Expose loaded diagnostics while redacting external credential settings."""
-    return {name: None if name in _CONFIG_ENV_NAMES else value for name, value in _DOTENV_VALUES.items()}
+    values = dict(_DOTENV_VALUES)
+    values.update(dict.fromkeys(_CREDENTIAL_VALUES))
+    return {name: None if name in _CONFIG_ENV_NAMES else value for name, value in values.items()}
 
 
 @contextmanager

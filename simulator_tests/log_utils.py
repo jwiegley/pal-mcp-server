@@ -43,14 +43,10 @@ class LogUtils:
                     selected.append(line)
             return "".join(selected)
 
-        try:
-            threshold = datetime.fromisoformat(since_time) if since_time else None
-            main_logs = read_since(cls.MAIN_LOG_FILE, threshold)
-            activity_logs = read_since(cls.ACTIVITY_LOG_FILE, threshold)
-            return main_logs + "\n" + activity_logs
-        except (OSError, ValueError) as error:
-            logging.warning(f"Failed to read server logs: {error}")
-            return ""
+        threshold = datetime.fromisoformat(since_time) if since_time else None
+        main_logs = read_since(cls.MAIN_LOG_FILE, threshold)
+        activity_logs = read_since(cls.ACTIVITY_LOG_FILE, threshold)
+        return main_logs + "\n" + activity_logs
 
     @classmethod
     def get_recent_server_logs(cls, lines: int = 500) -> str:

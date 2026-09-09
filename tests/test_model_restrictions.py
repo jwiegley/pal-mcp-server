@@ -76,7 +76,7 @@ class TestModelRestrictionService:
                 assert service.is_allowed(ProviderType.GOOGLE, "pro")
                 assert service.is_allowed(ProviderType.GOOGLE, "gemini-3.1-pro-preview")
 
-    def test_current_five_model_policy(self):
+    def test_five_provider_allowlist_mapping(self):
         restrictions = {
             "OPENAI_ALLOWED_MODELS": "gpt-6-astra",
             "GOOGLE_ALLOWED_MODELS": "gemini-3.8-flash",

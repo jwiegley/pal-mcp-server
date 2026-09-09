@@ -715,17 +715,11 @@ class ThinkDeepWorkflowValidationTest(ConversationBaseTest):
 
             self.logger.info("    ✅ Final step correctly uses fully_embedded file context")
 
-            # Both statuses prove the expert was called; it may request more context.
-            status = response2_data.get("status")
-            if status not in {"calling_expert_analysis", "files_required_to_continue"}:
-                self.logger.error(f"Final step returned unexpected expert status: {status}")
+            if response2_data.get("status") != "calling_expert_analysis":
+                self.logger.error("Final step should trigger expert analysis")
                 return False
-
-            if status == "calling_expert_analysis" and "expert_analysis" not in response2_data:
+            if "expert_analysis" not in response2_data:
                 self.logger.error("Expert analysis should be present in final step")
-                return False
-            if status == "files_required_to_continue" and not response2_data.get("content"):
-                self.logger.error("File request should explain what context is required")
                 return False
 
             self.logger.info("    ✅ Context-aware file embedding test completed successfully")

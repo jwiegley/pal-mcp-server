@@ -383,7 +383,7 @@ DISABLED_TOOLS=
 
 **Model Support**
 - **Multiple providers** - Gemini, OpenAI, Anthropic, Azure, X.AI, Factory Droid, OpenRouter, DIAL, Ollama
-- **Latest models** - GPT-5.6 Sol, Gemini 3.1 Pro, Claude Fable 5, Grok 4.6, DeepSeek V4 Pro, local Llama
+- **Latest models** - GPT-6 Astra, Gemini 3.8 Flash, Claude Fable 5.1, Grok 4.6, DeepSeek V4 Pro, local Llama
 - **[Thinking modes](docs/advanced-usage.md#thinking-modes)** - Control reasoning depth vs cost
 - **Vision support** - Analyze images, diagrams, screenshots
 

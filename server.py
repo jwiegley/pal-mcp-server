@@ -69,7 +69,7 @@ from tools import (  # noqa: E402
 )
 from tools.models import ToolOutput  # noqa: E402
 from tools.shared.exceptions import ToolExecutionError  # noqa: E402
-from utils.env import env_override_enabled, get_env  # noqa: E402
+from utils.env import env_override_enabled, get_env, get_env_bool  # noqa: E402
 
 # Configure logging for server operations
 # Can be controlled via LOG_LEVEL environment variable (DEBUG, INFO, WARNING, ERROR)
@@ -476,16 +476,16 @@ def configure_providers():
 
     factory_key = get_env("FACTORY_API_KEY")
     factory_key_configured = bool(factory_key and factory_key != "your_factory_api_key_here")
-    factory_local_auth = (get_env("PAL_FACTORY_DROID_USE_LOCAL_LOGIN", "") or "").lower() in {"1", "true", "yes"}
+    factory_local_auth = get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN")
     factory_auth_configured = factory_key_configured or factory_local_auth
     managed_droid_executable = get_env("PAL_DROID_EXECUTABLE")
-    droid_executable = managed_droid_executable or (shutil.which("droid") if factory_auth_configured else None)
-    if factory_auth_configured and droid_executable:
+    droid_executable = shutil.which(managed_droid_executable or "droid") if factory_auth_configured else None
+    if factory_auth_configured and not droid_executable:
+        raise RuntimeError("Factory authentication is configured but the Droid executable is unavailable")
+    if droid_executable:
         valid_providers.append("Factory (Droid SDK)")
         has_factory = True
         logger.info("Droid runtime and Factory authentication configuration found")
-    elif factory_auth_configured:
-        logger.warning("Factory authentication is configured but the Droid CLI is unavailable")
 
     # Check for DIAL API key
     dial_key = get_env("DIAL_API_KEY")

@@ -68,8 +68,9 @@ XAI_API_KEY=your_xai_api_key_here
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 # Get from: https://console.anthropic.com/
 
-# Factory Droid SDK (an authenticated local Droid CLI also works)
+# Factory Droid SDK: use an API key, or explicitly opt into local Droid CLI login.
 FACTORY_API_KEY=your_factory_api_key_here
+# PAL_FACTORY_DROID_USE_LOCAL_LOGIN=true
 # Droid must be installed; set PAL_DROID_EXECUTABLE when it is not on PATH.
 ```
 

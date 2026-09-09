@@ -126,8 +126,11 @@ class TestFactoryProvider:
         },
         clear=True,
     )
+    @patch("droid_sdk.transport.ProcessTransport")
     @patch("droid_sdk.run", new_callable=AsyncMock)
-    def test_local_droid_auth_ignores_explicit_api_key(self, sdk_run):
+    def test_local_droid_auth_ignores_explicit_api_key(self, sdk_run, transport_class):
+        transport = transport_class.return_value
+        transport.connect = AsyncMock()
         observed_keys = []
 
         async def run_with_environment_check(*_args, **_kwargs):
@@ -140,8 +143,72 @@ class TestFactoryProvider:
 
         call = sdk_run.await_args.kwargs
         assert call["api_key"] is None
-        assert call["runtime"].env == {"HOME": "/tmp/factory-home"}
-        assert observed_keys == [None]
+        assert dict(call["runtime"].env) == {}
+        assert call["runtime"].transport is transport
+        transport.connect.assert_awaited_once()
+        transport_class.assert_called_once_with(
+            exec_path="droid",
+            cwd=os.getcwd(),
+            env={"HOME": "/tmp/factory-home", "FACTORY_API_KEY": ""},
+        )
+        assert observed_keys == ["ambient-decoy"]
+
+    @patch.dict(
+        os.environ,
+        {
+            "PAL_FACTORY_DROID_USE_LOCAL_LOGIN": "yes",
+            "PAL_DROID_EXECUTABLE": "/managed/droid",
+        },
+        clear=True,
+    )
+    @patch("shutil.which", return_value="/managed/droid")
+    def test_configure_providers_accepts_valid_managed_droid(self, which):
+        import server
+
+        ModelProviderRegistry.reset_for_testing()
+        try:
+            server.configure_providers()
+            assert ProviderType.FACTORY in ModelProviderRegistry.get_available_providers()
+            which.assert_called_once_with("/managed/droid")
+        finally:
+            ModelProviderRegistry.reset_for_testing()
+
+    @patch.dict(
+        os.environ,
+        {
+            "PAL_FACTORY_DROID_USE_LOCAL_LOGIN": "true",
+            "PAL_DROID_EXECUTABLE": "/missing/droid",
+        },
+        clear=True,
+    )
+    @patch("shutil.which", return_value=None)
+    def test_configure_providers_rejects_missing_managed_droid(self, which):
+        import server
+
+        ModelProviderRegistry.reset_for_testing()
+        try:
+            with pytest.raises(RuntimeError, match="Droid executable is unavailable"):
+                server.configure_providers()
+            which.assert_called_once_with("/missing/droid")
+        finally:
+            ModelProviderRegistry.reset_for_testing()
+
+    @patch("droid_sdk.run", new_callable=AsyncMock)
+    def test_unsupported_generation_inputs_fail_before_sdk(self, sdk_run):
+        provider = FactoryModelProvider("factory-secret")
+        with pytest.raises(ValueError, match="does not support max_output_tokens"):
+            provider.generate_content(
+                prompt="hello",
+                model_name="deepseek-v4-pro",
+                max_output_tokens=128,
+            )
+        with pytest.raises(ValueError, match="does not support images"):
+            provider.generate_content(
+                prompt="hello",
+                model_name="deepseek-v4-pro",
+                images=["/tmp/image.png"],
+            )
+        sdk_run.assert_not_awaited()
 
     @patch("droid_sdk.run", new_callable=AsyncMock)
     def test_invalid_model_never_reaches_sdk(self, sdk_run):
