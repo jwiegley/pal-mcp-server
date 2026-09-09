@@ -26,6 +26,30 @@
   },
   "models": [
     {
+      "model_name": "gpt-6-astra",
+      "friendly_name": "OpenAI (GPT-6 Astra)",
+      "aliases": [
+        "gpt6-astra",
+        "gpt6astra",
+        "astra"
+      ],
+      "intelligence_score": 20,
+      "description": "GPT-6 Astra (272K context) - Frontier reasoning model for complex professional and agentic work",
+      "context_window": 272000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": false,
+      "max_image_size_mb": 20.0,
+      "use_openai_response_api": true,
+      "default_reasoning_effort": "medium",
+      "allow_code_generation": true
+    },
+    {
       "model_name": "gpt-5.6-sol",
       "friendly_name": "OpenAI (GPT-5.6 Sol)",
       "aliases": [

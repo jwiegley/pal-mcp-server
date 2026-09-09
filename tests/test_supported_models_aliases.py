@@ -20,6 +20,7 @@ class TestSupportedModelsAliases:
 
         # Test specific aliases
         assert "flash" in provider.MODEL_CAPABILITIES["gemini-2.5-flash"].aliases
+        assert "flash3.8" in provider.MODEL_CAPABILITIES["gemini-3.8-flash"].aliases
         assert "pro" in provider.MODEL_CAPABILITIES["gemini-3.1-pro-preview"].aliases
         assert "flash-2.0" in provider.MODEL_CAPABILITIES["gemini-2.0-flash"].aliases
         assert "flash2" in provider.MODEL_CAPABILITIES["gemini-2.0-flash"].aliases
@@ -27,6 +28,7 @@ class TestSupportedModelsAliases:
         assert "flash-lite" in provider.MODEL_CAPABILITIES["gemini-2.5-flash-lite"].aliases
 
         # Test alias resolution
+        assert provider._resolve_model_name("flash3.8") == "gemini-3.8-flash"
         assert provider._resolve_model_name("flash") == "gemini-2.5-flash"
         assert provider._resolve_model_name("pro") == "gemini-3.1-pro-preview"
         assert provider._resolve_model_name("flash-2.0") == "gemini-2.0-flash"
@@ -34,6 +36,7 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("flashlite") == "gemini-2.5-flash-lite"
 
         # Test case insensitive resolution
+        assert provider._resolve_model_name("FLASH3.8") == "gemini-3.8-flash"
         assert provider._resolve_model_name("Flash") == "gemini-2.5-flash"
         assert provider._resolve_model_name("PRO") == "gemini-3.1-pro-preview"
 
@@ -55,6 +58,7 @@ class TestSupportedModelsAliases:
         assert "o3pro" in provider.MODEL_CAPABILITIES["o3-pro"].aliases
         assert "gpt4.1" in provider.MODEL_CAPABILITIES["gpt-4.1"].aliases
         assert "gpt5.2" in provider.MODEL_CAPABILITIES["gpt-5.2"].aliases
+        assert "astra" in provider.MODEL_CAPABILITIES["gpt-6-astra"].aliases
         assert "gpt-5.6" in provider.MODEL_CAPABILITIES["gpt-5.6-sol"].aliases
         assert "gpt5.6terra" in provider.MODEL_CAPABILITIES["gpt-5.6-terra"].aliases
         assert "gpt5.6luna" in provider.MODEL_CAPABILITIES["gpt-5.6-luna"].aliases
@@ -67,6 +71,7 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("gpt4.1") == "gpt-4.1"  # gpt4.1 resolves to gpt-4.1
         assert provider._resolve_model_name("gpt5.2") == "gpt-5.2"
         assert provider._resolve_model_name("gpt5.4") == "gpt-5.4"
+        assert provider._resolve_model_name("astra") == "gpt-6-astra"
         assert provider._resolve_model_name("gpt5.6") == "gpt-5.6-sol"
         assert provider._resolve_model_name("gpt5.6terra") == "gpt-5.6-terra"
         assert provider._resolve_model_name("gpt5.6luna") == "gpt-5.6-luna"
@@ -75,6 +80,7 @@ class TestSupportedModelsAliases:
         assert provider._resolve_model_name("Mini") == "gpt-5-mini"  # mini -> gpt-5-mini now
         assert provider._resolve_model_name("O3MINI") == "o3-mini"
         assert provider._resolve_model_name("Gpt5.4") == "gpt-5.4"
+        assert provider._resolve_model_name("ASTRA") == "gpt-6-astra"
         assert provider._resolve_model_name("Gpt5.6") == "gpt-5.6-sol"
 
     def test_xai_provider_aliases(self):
@@ -149,6 +155,8 @@ class TestSupportedModelsAliases:
         gemini_models = gemini_provider.list_models(respect_restrictions=False)
         assert "gemini-2.5-flash" in gemini_models
         assert "flash" in gemini_models
+        assert "gemini-3.8-flash" in gemini_models
+        assert "flash3.8" in gemini_models
         assert "gemini-3.1-pro-preview" in gemini_models
         assert "pro" in gemini_models
 
@@ -159,6 +167,8 @@ class TestSupportedModelsAliases:
         assert "mini" in openai_models
         assert "o3-mini" in openai_models
         assert "o3mini" in openai_models
+        assert "gpt-6-astra" in openai_models
+        assert "astra" in openai_models
         assert "gpt-5.6-sol" in openai_models
         assert "gpt-5.6" in openai_models
         assert "gpt-5.6-terra" in openai_models
@@ -192,6 +202,8 @@ class TestSupportedModelsAliases:
         )
         assert "gemini-2.5-flash" in gemini_all
         assert "flash" in gemini_all
+        assert "gemini-3.8-flash" in gemini_all
+        assert "flash3.8" in gemini_all
         assert "gemini-3.1-pro-preview" in gemini_all
         assert "pro" in gemini_all
         # All should be lowercase
@@ -209,6 +221,8 @@ class TestSupportedModelsAliases:
         assert "mini" in openai_all
         assert "o3-mini" in openai_all
         assert "o3mini" in openai_all
+        assert "gpt-6-astra" in openai_all
+        assert "astra" in openai_all
         assert "gpt-5.6-sol" in openai_all
         assert "gpt-5.6" in openai_all
         assert "gpt-5.6-terra" in openai_all

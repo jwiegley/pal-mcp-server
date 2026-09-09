@@ -110,6 +110,19 @@ class TestGeminiProvider:
 
         assert capabilities.supports_extended_thinking
 
+    def test_get_capabilities_gemini_3_8_flash(self):
+        provider = GeminiModelProvider(api_key="test-key")
+        capabilities = provider.get_capabilities("gemini-3.8-flash")
+
+        assert capabilities.provider == ProviderType.GOOGLE
+        assert capabilities.model_name == "gemini-3.8-flash"
+        assert capabilities.context_window == 1_048_576
+        assert capabilities.max_output_tokens == 65_536
+        assert capabilities.max_thinking_tokens == 24_576
+        assert capabilities.supports_extended_thinking
+        assert capabilities.supports_images
+        assert capabilities.allow_code_generation
+
     def test_model_shorthand_resolution(self):
         """Test model shorthand resolution"""
         provider = GeminiModelProvider(api_key="test-key")

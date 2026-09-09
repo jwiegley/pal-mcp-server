@@ -52,6 +52,7 @@ class TestOpenAIProvider:
         assert provider.validate_model_name("gpt-5-mini") is True
         assert provider.validate_model_name("gpt-5.2") is True
         assert provider.validate_model_name("gpt-5.6") is True
+        assert provider.validate_model_name("gpt-6-astra") is True
         assert provider.validate_model_name("gpt-5.6-sol") is True
         assert provider.validate_model_name("gpt-5.6-terra") is True
         assert provider.validate_model_name("gpt-5.6-luna") is True
@@ -66,6 +67,7 @@ class TestOpenAIProvider:
         assert provider.validate_model_name("gpt5mini") is True
         assert provider.validate_model_name("gpt5.2") is True
         assert provider.validate_model_name("gpt5.4") is True
+        assert provider.validate_model_name("astra") is True
         assert provider.validate_model_name("gpt5.6") is True
         assert provider.validate_model_name("gpt5.6terra") is True
         assert provider.validate_model_name("gpt5.6luna") is True
@@ -89,6 +91,7 @@ class TestOpenAIProvider:
         assert provider._resolve_model_name("gpt5mini") == "gpt-5-mini"
         assert provider._resolve_model_name("gpt5.2") == "gpt-5.2"
         assert provider._resolve_model_name("gpt5.4") == "gpt-5.4"
+        assert provider._resolve_model_name("astra") == "gpt-6-astra"
         assert provider._resolve_model_name("gpt5.6") == "gpt-5.6-sol"
         assert provider._resolve_model_name("gpt5.6terra") == "gpt-5.6-terra"
         assert provider._resolve_model_name("gpt5.6luna") == "gpt-5.6-luna"
@@ -103,6 +106,7 @@ class TestOpenAIProvider:
         assert provider._resolve_model_name("gpt-5-mini") == "gpt-5-mini"
         assert provider._resolve_model_name("gpt-5.2") == "gpt-5.2"
         assert provider._resolve_model_name("gpt-5.4") == "gpt-5.4"
+        assert provider._resolve_model_name("gpt-6-astra") == "gpt-6-astra"
         assert provider._resolve_model_name("gpt-5.6") == "gpt-5.6-sol"
         assert provider._resolve_model_name("gpt-5.6-sol") == "gpt-5.6-sol"
         assert provider._resolve_model_name("gpt-5.6-terra") == "gpt-5.6-terra"
@@ -176,6 +180,21 @@ class TestOpenAIProvider:
         assert capabilities.supports_streaming is True
         assert capabilities.supports_function_calling is True
         assert capabilities.supports_json_mode is True
+        assert capabilities.allow_code_generation is True
+
+    def test_get_capabilities_gpt6_astra(self):
+        provider = OpenAIModelProvider("test-key")
+        capabilities = provider.get_capabilities("gpt-6-astra")
+
+        assert capabilities.model_name == "gpt-6-astra"
+        assert capabilities.context_window == 272_000
+        assert capabilities.max_output_tokens == 128_000
+        assert capabilities.intelligence_score == 20
+        assert capabilities.supports_extended_thinking is True
+        assert capabilities.supports_streaming is True
+        assert capabilities.supports_images is True
+        assert capabilities.supports_temperature is False
+        assert capabilities.use_openai_response_api is True
         assert capabilities.allow_code_generation is True
 
     def test_get_capabilities_gpt56_family(self):
@@ -316,6 +335,8 @@ class TestOpenAIProvider:
             "gpt5nano",
             "nano",
             "mini",  # resolves to gpt-5-mini
+            "gpt-6-astra",
+            "astra",
             "gpt-5.6",
             "gpt-5.6-terra",
             "gpt-5.6-luna",
@@ -381,6 +402,30 @@ class TestOpenAIProvider:
         # Verify the response
         assert result.content == "4"
         assert result.model_name == "o3-pro"
+        assert result.metadata["endpoint"] == "responses"
+
+    @patch("providers.openai_compatible.OpenAI")
+    def test_astra_routes_to_responses_endpoint(self, mock_openai_class):
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.output_text = "PAL_OK_ASTRA"
+        mock_response.model = "gpt-6-astra"
+        mock_response.id = "test-id"
+        mock_response.created_at = 1234567890
+        mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=5, total_tokens=15)
+        mock_client.responses.create.return_value = mock_response
+
+        provider = OpenAIModelProvider("test-key")
+        result = provider.generate_content(prompt="connect", model_name="gpt-6-astra", thinking_mode="minimal")
+
+        mock_client.responses.create.assert_called_once()
+        mock_client.chat.completions.create.assert_not_called()
+        call_args = mock_client.responses.create.call_args[1]
+        assert call_args["model"] == "gpt-6-astra"
+        assert call_args["reasoning"] == {"effort": "medium"}
+        assert result.content == "PAL_OK_ASTRA"
+        assert result.model_name == "gpt-6-astra"
         assert result.metadata["endpoint"] == "responses"
 
     @patch("providers.openai_compatible.OpenAI")

@@ -47,9 +47,9 @@ Regardless of your default configuration, you can specify models per request:
 | **`gpt5`** (GPT-5) | OpenAI | 400K tokens | Advanced model with reasoning support | Complex problems requiring advanced reasoning |
 | **`gpt5-mini`** (GPT-5 Mini) | OpenAI | 400K tokens | Efficient variant with reasoning | Balanced performance and capability |
 | **`gpt5-nano`** (GPT-5 Nano) | OpenAI | 400K tokens | Fastest, cheapest GPT-5 variant | Summarization and classification tasks |
-| **`gpt-5.6-sol`** | OpenAI | 1.05M tokens | Frontier reasoning, coding, and vision model | Complex professional work |
-| **`gemini-3.1-pro-preview`** | Google | 1M tokens | Flagship thinking and multimodal model | Deep analysis and agentic workflows |
-| **`claude-fable-5`** | Anthropic | 1M tokens | Always-on adaptive thinking and vision | Long-running, high-complexity work |
+| **`gpt-6-astra`** | OpenAI | 272K tokens | Frontier reasoning, coding, and vision via Responses API | Complex professional work |
+| **`gemini-3.8-flash`** | Google | 1M tokens | Fast thinking and multimodal model | Analysis and agentic workflows |
+| **`claude-fable-5-1`** | Anthropic | 1M tokens | Always-on adaptive thinking and vision | Long-running, high-complexity work |
 | **`grok-4.6`** | X.AI | 500K tokens | Frontier reasoning, coding, and vision model | Complex analysis and agentic tasks |
 | **`grok-4`** | X.AI | 256K tokens | Earlier Grok reasoning and vision model | Complex analysis and reasoning tasks |
 | **`grok-4.1-fast-reasoning`** | X.AI | 2M tokens | Fast Grok reasoning model with vision | Fast responses and light reasoning |

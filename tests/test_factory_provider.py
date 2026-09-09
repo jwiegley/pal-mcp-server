@@ -128,13 +128,20 @@ class TestFactoryProvider:
     )
     @patch("droid_sdk.run", new_callable=AsyncMock)
     def test_local_droid_auth_ignores_explicit_api_key(self, sdk_run):
-        sdk_run.return_value = successful_result()
+        observed_keys = []
+
+        async def run_with_environment_check(*_args, **_kwargs):
+            observed_keys.append(os.environ.get("FACTORY_API_KEY"))
+            return successful_result()
+
+        sdk_run.side_effect = run_with_environment_check
 
         FactoryModelProvider("argument-decoy").generate_content(prompt="hello", model_name="deepseek-v4-pro")
 
         call = sdk_run.await_args.kwargs
         assert call["api_key"] is None
         assert call["runtime"].env == {"HOME": "/tmp/factory-home"}
+        assert observed_keys == [None]
 
     @patch("droid_sdk.run", new_callable=AsyncMock)
     def test_invalid_model_never_reaches_sdk(self, sdk_run):

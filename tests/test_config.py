@@ -28,6 +28,14 @@ class TestConfig:
         # Check updated date exists (don't assert on specific format/value)
         assert isinstance(__updated__, str)
 
+    def test_runtime_version_matches_package_version(self):
+        import tomllib
+
+        with open("pyproject.toml", "rb") as source:
+            package_version = tomllib.load(source)["project"]["version"]
+
+        assert __version__ == package_version
+
     def test_model_config(self):
         """Test model configuration"""
         # DEFAULT_MODEL is set in conftest.py for tests

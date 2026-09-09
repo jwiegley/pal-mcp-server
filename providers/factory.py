@@ -6,7 +6,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, ClassVar, Optional
 
-from utils.env import get_env, get_env_bool
+from utils.env import get_env, get_env_bool, suppress_env_vars
 from utils.image_utils import validate_image
 
 if TYPE_CHECKING:
@@ -171,16 +171,19 @@ class FactoryModelProvider(RegistryBackedProviderMixin, ModelProvider):
             restrict_tools=(),
             system_prompt=system_prompt or None,
         )
-        return await run(
-            prompt,
-            model=model_name,
-            reasoning_effort=getattr(ReasoningEffort, effort_name),
-            images=attachments,
-            timeout=self.REQUEST_TIMEOUT_SECONDS,
-            config=config,
-            runtime=runtime,
-            api_key=None if get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN") else (self.api_key or None),
-        )
+        local_login = get_env_bool("PAL_FACTORY_DROID_USE_LOCAL_LOGIN")
+        suppressed = ("FACTORY_API_KEY",) if local_login else ()
+        with suppress_env_vars(*suppressed):
+            return await run(
+                prompt,
+                model=model_name,
+                reasoning_effort=getattr(ReasoningEffort, effort_name),
+                images=attachments,
+                timeout=self.REQUEST_TIMEOUT_SECONDS,
+                config=config,
+                runtime=runtime,
+                api_key=None if local_login else (self.api_key or None),
+            )
 
     def _droid_environment(self) -> dict[str, str]:
         environment = {

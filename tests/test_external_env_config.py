@@ -16,9 +16,9 @@ PROVIDER_KEYS = {
     "PAL_FACTORY_DROID_USE_LOCAL_LOGIN": "true",
 }
 MODEL_ALLOWLISTS = {
-    "OPENAI_ALLOWED_MODELS": "gpt-5.6-sol",
-    "GOOGLE_ALLOWED_MODELS": "gemini-3.1-pro-preview",
-    "ANTHROPIC_ALLOWED_MODELS": "claude-fable-5",
+    "OPENAI_ALLOWED_MODELS": "gpt-6-astra",
+    "GOOGLE_ALLOWED_MODELS": "gemini-3.8-flash",
+    "ANTHROPIC_ALLOWED_MODELS": "claude-fable-5-1",
     "XAI_ALLOWED_MODELS": "grok-4.6",
     "FACTORY_ALLOWED_MODELS": "deepseek-v4-pro",
 }

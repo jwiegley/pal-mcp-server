@@ -26,6 +26,29 @@
   },
   "models": [
     {
+      "model_name": "gemini-3.8-flash",
+      "friendly_name": "Gemini 3.8 Flash",
+      "aliases": [
+        "gemini3.8-flash",
+        "flash3.8",
+        "flash-3.8"
+      ],
+      "intelligence_score": 18,
+      "description": "Gemini 3.8 Flash (1M context, 65K output) - Fast multimodal model with thinking support",
+      "context_window": 1048576,
+      "max_output_tokens": 65536,
+      "max_thinking_tokens": 24576,
+      "supports_extended_thinking": true,
+      "supports_system_prompts": true,
+      "supports_streaming": true,
+      "supports_function_calling": true,
+      "supports_json_mode": true,
+      "supports_images": true,
+      "supports_temperature": true,
+      "allow_code_generation": true,
+      "max_image_size_mb": 32.0
+    },
+    {
       "model_name": "gemini-3.1-pro-preview",
       "friendly_name": "Gemini Pro 3.1 Preview",
       "aliases": [

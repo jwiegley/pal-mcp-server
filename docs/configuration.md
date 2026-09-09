@@ -30,9 +30,9 @@ ANTHROPIC_API_KEY=<value>
 XAI_API_KEY=<value>
 FACTORY_API_KEY=<value>
 
-OPENAI_ALLOWED_MODELS=gpt-5.6-sol
-GOOGLE_ALLOWED_MODELS=gemini-3.1-pro-preview
-ANTHROPIC_ALLOWED_MODELS=claude-fable-5
+OPENAI_ALLOWED_MODELS=gpt-6-astra
+GOOGLE_ALLOWED_MODELS=gemini-3.8-flash
+ANTHROPIC_ALLOWED_MODELS=claude-fable-5-1
 XAI_ALLOWED_MODELS=grok-4.6
 FACTORY_ALLOWED_MODELS=deepseek-v4-pro
 ```
@@ -97,7 +97,7 @@ CUSTOM_MODEL_NAME=llama3.2                          # Default model
 
 **Default Model Selection:**
 ```env
-# Options: 'auto', 'gpt-5.6-sol', 'gemini-3.1-pro-preview', 'claude-fable-5', 'grok-4.6', 'deepseek-v4-pro', etc.
+# Options: 'auto', 'gpt-6-astra', 'gemini-3.8-flash', 'claude-fable-5-1', 'grok-4.6', 'deepseek-v4-pro', etc.
 DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 ```
 
@@ -117,15 +117,16 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 
   | Provider | Canonical Models | Notable Aliases |
   |----------|-----------------|-----------------|
-  | OpenAI | `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.5-pro`, `gpt-5.4`, `gpt-5.4-pro`, `gpt-5.3-codex`, `gpt-5.2`, `gpt-5.2-pro`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1`, `gpt-4.1-mini`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` | `gpt-5.6`, `gpt5.6`, `sol`, `terra`, `luna`, `gpt5.5`, `gpt5.4`, `gpt5.2`, `gpt5`, `gpt5pro`, `mini`, `nano`, `codex`, `o3mini`, `o3pro`, `o4mini` |
-  | Gemini | `gemini-3.1-pro-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
-  | Anthropic | `claude-fable-5`, `claude-opus-5`, `claude-opus-4-8`, `claude-sonnet-5`, and other entries in the manifest | `fable`, `fable-5`, `opus`, `sonnet` |
+  | OpenAI | `gpt-6-astra`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.5-pro`, `gpt-5.4`, `gpt-5.4-pro`, `gpt-5.3-codex`, `gpt-5.2`, `gpt-5.2-pro`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1`, `gpt-4.1-mini`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` | `astra`, `gpt-5.6`, `gpt5.6`, `sol`, `terra`, `luna`, `gpt5.5`, `gpt5.4`, `gpt5.2`, `gpt5`, `gpt5pro`, `mini`, `nano`, `codex`, `o3mini`, `o3pro`, `o4mini` |
+  | Gemini | `gemini-3.8-flash`, `gemini-3.1-pro-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite` | `flash3.8`, `pro`, `gemini-pro`, `flash`, `flash-2.0`, `flashlite` |
+  | Anthropic | `claude-fable-5-1`, `claude-fable-5`, `claude-opus-5`, `claude-opus-4-8`, `claude-sonnet-5`, and other entries in the manifest | `fable-5.1`, `fable`, `fable-5`, `opus`, `sonnet` |
   | X.AI | `grok-4.6`, `grok-4`, `grok-4-1-fast-reasoning` | `grok46`, `grok`, `grok4`, `grok-4.1-fast-reasoning` |
   | Factory | `deepseek-v4-pro` through Droid SDK | Exact model name only |
   | OpenRouter | See `conf/openrouter_models.json` for the continually evolving catalogue | e.g., `opus`, `sonnet`, `flash`, `pro`, `mistral` |
   | Custom | User-managed entries such as `llama3.2` | Define your own aliases per entry |
 
-  The GPT-5.6 family exposes 1.05M-token contexts, 128K-token outputs, reasoning support, multimodal input, streaming, and code-generation capability. `gpt-5.6` resolves to the frontier `gpt-5.6-sol`; use `gpt-5.6-terra` for the balanced tier or `gpt-5.6-luna` for cost-sensitive, high-volume work. Update your manifests if you run custom deployments so these capability bits stay accurate.
+  GPT-6 Astra uses OpenAI's Responses API with a 272K-token context and 128K-token output. The GPT-5.6 family remains available with 1.05M-token contexts; `gpt-5.6` continues to resolve to `gpt-5.6-sol`.
+  Gemini 3.8 Flash exposes the live Google model's 1,048,576-token input limit, 65,536-token output limit, and thinking support.
 
   > **Tip:** Copy the JSON file you need, customise it, and point the corresponding `*_MODELS_CONFIG_PATH` environment variable to your version. This lets you enable or disable capabilities (JSON mode, function calling, temperature support, code generation) without editing Python.
 
@@ -239,8 +240,11 @@ OPENAI_ALLOWED_MODELS=o4-mini
 GOOGLE_ALLOWED_MODELS=flash
 
 # High-performance setup
-OPENAI_ALLOWED_MODELS=gpt-5.6-sol,gpt-5.6-terra
-GOOGLE_ALLOWED_MODELS=pro
+OPENAI_ALLOWED_MODELS=gpt-6-astra
+GOOGLE_ALLOWED_MODELS=gemini-3.8-flash
+ANTHROPIC_ALLOWED_MODELS=claude-fable-5-1
+XAI_ALLOWED_MODELS=grok-4.6
+FACTORY_ALLOWED_MODELS=deepseek-v4-pro
 
 # Single model standardization
 OPENAI_ALLOWED_MODELS=o4-mini

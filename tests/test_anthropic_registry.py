@@ -65,13 +65,14 @@ def test_fable_capabilities(model_name):
     assert caps.supports_function_calling is True
 
 
-def test_fable_outranks_opus_for_auto_mode():
-    """Fable 5 must rank above Opus 5 and Opus 4.8 in auto-mode model ordering."""
+def test_fable_5_1_outranks_fable_5_and_opus():
     registry = AnthropicModelRegistry()
-    fable = registry.resolve("claude-fable-5")
+    fable_5_1 = registry.resolve("claude-fable-5-1")
+    fable_5 = registry.resolve("claude-fable-5")
     opus_5 = registry.resolve("claude-opus-5")
     opus_4_8 = registry.resolve("claude-opus-4-8")
-    assert fable.intelligence_score > opus_5.intelligence_score
+    assert fable_5_1.intelligence_score > fable_5.intelligence_score
+    assert fable_5.intelligence_score > opus_5.intelligence_score
     assert opus_5.intelligence_score > opus_4_8.intelligence_score
 
 
@@ -107,6 +108,7 @@ def test_sonnet_5_capabilities():
 def test_adaptive_models_declare_reasoning_effort():
     """Adaptive-thinking models are tagged via default_reasoning_effort; budget models are not."""
     registry = AnthropicModelRegistry()
+    assert registry.resolve("claude-fable-5-1").default_reasoning_effort == "high"
     assert registry.resolve("claude-fable-5").default_reasoning_effort == "high"
     assert registry.resolve("claude-opus-5").default_reasoning_effort == "high"
     assert registry.resolve("claude-opus-4-8").default_reasoning_effort == "high"

@@ -81,15 +81,16 @@ Native catalogues (`conf/openai_models.json`, `conf/gemini_models.json`, `conf/x
 
 ### Latest OpenAI releases
 
-The GPT-5.6 family ships in `conf/openai_models.json` with a new tier naming scheme:
+GPT-6 Astra and the GPT-5.6 family ship in `conf/openai_models.json`:
 
 | Model | Highlights | Notes |
 |-------|------------|-------|
+| `gpt-6-astra` | 272K context, 128K output, multimodal IO, Responses API | `astra` alias; score 20 |
 | `gpt-5.6-sol` | 1.05M context, 128K output, multimodal IO, frontier capability | The `gpt-5.6` alias routes here; score 20 |
 | `gpt-5.6-terra` | 1.05M context, 128K output, multimodal IO | Balanced intelligence/cost tier; score 19 |
 | `gpt-5.6-luna` | 1.05M context, 128K output, multimodal IO | Efficient high-volume tier; score 18 |
 
-These entries include convenient aliases (`gpt5.6`, `sol`, `terra`, `luna`) plus updated capability flags (`supports_extended_thinking`, `allow_code_generation`). Copy the manifest if you operate custom deployment names so downstream providers inherit the same metadata.
+Astra uses the Responses API and includes `astra`, `gpt6-astra`, and `gpt6astra` aliases. The GPT-5.6 entries retain their convenient aliases (`gpt5.6`, `sol`, `terra`, `luna`) and capability flags. Copy the manifest if you operate custom deployment names so downstream providers inherit the same metadata.
 
 Because providers load the manifests on import, you can tweak capabilities without touching Python. Restart the server after editing the JSON files so changes are picked up.
 

@@ -76,6 +76,28 @@ class TestModelRestrictionService:
                 assert service.is_allowed(ProviderType.GOOGLE, "pro")
                 assert service.is_allowed(ProviderType.GOOGLE, "gemini-3.1-pro-preview")
 
+    def test_current_five_model_policy(self):
+        restrictions = {
+            "OPENAI_ALLOWED_MODELS": "gpt-6-astra",
+            "GOOGLE_ALLOWED_MODELS": "gemini-3.8-flash",
+            "ANTHROPIC_ALLOWED_MODELS": "claude-fable-5-1",
+            "XAI_ALLOWED_MODELS": "grok-4.6",
+            "FACTORY_ALLOWED_MODELS": "deepseek-v4-pro",
+        }
+        with patch.dict(os.environ, restrictions):
+            service = ModelRestrictionService()
+
+        expected = {
+            ProviderType.OPENAI: "gpt-6-astra",
+            ProviderType.GOOGLE: "gemini-3.8-flash",
+            ProviderType.ANTHROPIC: "claude-fable-5-1",
+            ProviderType.XAI: "grok-4.6",
+            ProviderType.FACTORY: "deepseek-v4-pro",
+        }
+        for provider, model in expected.items():
+            assert service.get_allowed_models(provider) == {model}
+            assert service.is_allowed(provider, model)
+
     def test_case_insensitive_and_whitespace_handling(self):
         """Test that model names are case-insensitive and whitespace is trimmed."""
         with patch.dict(os.environ, {"OPENAI_ALLOWED_MODELS": " O3-MINI , o4-Mini "}):
