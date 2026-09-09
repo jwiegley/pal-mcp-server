@@ -185,6 +185,8 @@ protocol View {
 
             self.logger.debug(f"Full traceback: {traceback.format_exc()}")
             return False
+        finally:
+            self.cleanup_test_files()
 
 
 def main():

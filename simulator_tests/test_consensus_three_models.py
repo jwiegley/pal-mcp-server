@@ -49,7 +49,6 @@ class TestConsensusThreeModels(BaseSimulatorTest):
                             "stance_prompt": "You are a pragmatic software engineer. Provide a balanced analysis considering both the benefits and drawbacks. Focus on the specific context of a CoolTodos app and what factors would determine if this is the right choice.",
                         },
                     ],
-                    "model": "flash",  # Default model for Claude's execution
                 },
             )
 
@@ -115,13 +114,14 @@ class TestConsensusThreeModels(BaseSimulatorTest):
             self.logger.info(f"Model stance: {model_response.get('stance', 'neutral')}")
             self.logger.info(f"Response status: {model_response.get('status', 'unknown')}")
 
-            # Check metadata contains model name
+            # Consensus metadata records the complete consultation roster, not one model.
             metadata = consensus_data.get("metadata", {})
-            if not metadata.get("model_name"):
-                self.logger.error("Missing model_name in metadata")
+            expected_models = ["flash:against", "flash:for", "local-llama:neutral"]
+            if metadata.get("models_to_consult") != expected_models:
+                self.logger.error(f"Incorrect consensus model roster: {metadata.get('models_to_consult')}")
                 return False
 
-            self.logger.info(f"Model name in metadata: {metadata.get('model_name')}")
+            self.logger.info(f"Consensus model roster: {metadata['models_to_consult']}")
 
             # Verify we have analysis from Claude
             agent_analysis = consensus_data.get("agent_analysis")
@@ -135,7 +135,7 @@ class TestConsensusThreeModels(BaseSimulatorTest):
             self.logger.info("✓ Three-model consensus tool test completed successfully")
             self.logger.info(f"✓ Step 1 completed with model: {model_response.get('model')}")
             self.logger.info(f"✓ Analysis provided: {len(analysis_text)} characters")
-            self.logger.info(f"✓ Model metadata properly included: {metadata.get('model_name')}")
+            self.logger.info(f"✓ Consensus metadata includes {len(metadata['models_to_consult'])} models")
             self.logger.info("✓ Ready for step 2 continuation")
 
             return True

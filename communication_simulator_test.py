@@ -135,20 +135,19 @@ class CommunicationSimulator:
         """Get the Python path for the virtual environment"""
         current_dir = os.getcwd()
 
-        # Try .venv first (modern convention)
+        # The setup and quality scripts own .pal_venv; unrelated virtual
+        # environments in the checkout must not shadow it.
+        pal_venv_python = os.path.join(current_dir, ".pal_venv", "bin", "python")
+        if os.path.exists(pal_venv_python):
+            return pal_venv_python
+
         venv_python = os.path.join(current_dir, ".venv", "bin", "python")
         if os.path.exists(venv_python):
             return venv_python
 
-        # Try venv as fallback
         venv_python = os.path.join(current_dir, "venv", "bin", "python")
         if os.path.exists(venv_python):
             return venv_python
-
-        # Try .pal_venv as fallback
-        pal_venv_python = os.path.join(current_dir, ".pal_venv", "bin", "python")
-        if os.path.exists(pal_venv_python):
-            return pal_venv_python
 
         # Fallback to system python if venv doesn't exist
         self.logger.warning("Virtual environment not found, using system python")

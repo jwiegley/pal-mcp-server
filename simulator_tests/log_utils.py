@@ -8,6 +8,7 @@ used across multiple simulator test files to reduce code duplication.
 import logging
 import re
 import subprocess
+from datetime import datetime
 from typing import Optional, Union
 
 
@@ -20,37 +21,35 @@ class LogUtils:
 
     @classmethod
     def get_server_logs_since(cls, since_time: Optional[str] = None) -> str:
-        """
-        Get server logs from both main and activity log files.
+        """Get main and activity log entries at or after ``since_time``."""
 
-        Args:
-            since_time: Currently ignored, returns all available logs
+        def read_since(path: str, threshold: Optional[datetime]) -> str:
+            try:
+                with open(path) as stream:
+                    lines = stream.readlines()
+            except FileNotFoundError:
+                return ""
 
-        Returns:
-            Combined logs from both log files
-        """
+            if threshold is None:
+                return "".join(lines)
+
+            selected = []
+            include = False
+            for line in lines:
+                match = re.match(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(?:,\d{3})?", line)
+                if match:
+                    include = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S") >= threshold
+                if include:
+                    selected.append(line)
+            return "".join(selected)
+
         try:
-            main_logs = ""
-            activity_logs = ""
-
-            # Read main server log
-            try:
-                with open(cls.MAIN_LOG_FILE) as f:
-                    main_logs = f.read()
-            except FileNotFoundError:
-                pass
-
-            # Read activity log
-            try:
-                with open(cls.ACTIVITY_LOG_FILE) as f:
-                    activity_logs = f.read()
-            except FileNotFoundError:
-                pass
-
+            threshold = datetime.fromisoformat(since_time) if since_time else None
+            main_logs = read_since(cls.MAIN_LOG_FILE, threshold)
+            activity_logs = read_since(cls.ACTIVITY_LOG_FILE, threshold)
             return main_logs + "\n" + activity_logs
-
-        except Exception as e:
-            logging.warning(f"Failed to read server logs: {e}")
+        except (OSError, ValueError) as error:
+            logging.warning(f"Failed to read server logs: {error}")
             return ""
 
     @classmethod

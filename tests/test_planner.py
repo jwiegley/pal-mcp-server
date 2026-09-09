@@ -199,6 +199,35 @@ class TestPlannerTool:
         assert parsed_response["step_number"] == 1
         assert parsed_response["continuation_id"] == "test-continuation-id"
         assert parsed_response["next_step_required"] is True
+        assert "Authentication system" in parsed_response["previous_plan_context"]
+
+    @pytest.mark.asyncio
+    async def test_completed_plan_is_retained_for_follow_up(self):
+        import json
+
+        tool = PlannerTool()
+        completed = await tool.execute(
+            {
+                "step": "Authentication migration complete",
+                "step_number": 1,
+                "total_steps": 1,
+                "next_step_required": False,
+            }
+        )
+        completed_response = json.loads(completed[0].text)
+
+        follow_up = await tool.execute(
+            {
+                "step": "Plan deployment",
+                "step_number": 1,
+                "total_steps": 2,
+                "next_step_required": True,
+                "continuation_id": completed_response["continuation_id"],
+            }
+        )
+        follow_up_response = json.loads(follow_up[0].text)
+
+        assert "Authentication migration complete" in follow_up_response["previous_plan_context"]
 
     @pytest.mark.asyncio
     async def test_execute_final_step(self):

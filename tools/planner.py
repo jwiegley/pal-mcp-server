@@ -20,6 +20,7 @@ Perfect for: complex project planning, system design with unknowns, migration st
 architectural decisions, and breaking down large problems into manageable steps.
 """
 
+import json
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -412,12 +413,50 @@ class PlannerTool(WorkflowTool):
 
         return response_data
 
+    def _extract_clean_workflow_content_for_history(self, response_data: dict) -> str:
+        clean_data = json.loads(super()._extract_clean_workflow_content_for_history(response_data))
+        if response_data.get("planning_complete") is True:
+            clean_data["planning_complete"] = True
+            plan_summary = response_data.get("plan_summary")
+            if isinstance(plan_summary, str) and plan_summary:
+                clean_data["plan_summary"] = plan_summary
+        return json.dumps(clean_data, indent=2, ensure_ascii=False)
+
+    @staticmethod
+    def _load_previous_plan_context(continuation_id: str) -> str:
+        from utils.conversation_memory import get_thread
+
+        thread = get_thread(continuation_id)
+        if not thread:
+            return ""
+
+        for turn in reversed(thread.turns):
+            if turn.role != "assistant" or turn.tool_name != "planner":
+                continue
+            try:
+                payload = json.loads(turn.content)
+            except (json.JSONDecodeError, TypeError):
+                payload = None
+            if isinstance(payload, dict) and payload.get("planning_complete"):
+                summary = payload.get("plan_summary")
+                if isinstance(summary, str) and summary:
+                    return summary[:500]
+            if "planning_complete" in turn.content and "COMPLETE PLAN:" in turn.content:
+                start = turn.content.find("COMPLETE PLAN:")
+                return turn.content[start : start + 500]
+        return ""
+
     def customize_workflow_response(self, response_data: dict, request) -> dict:
         """
         Customize response to match original planner tool format.
         """
         # No need to append to step_history since workflow mixin already manages work_history
         # and we calculate step counts from work_history
+
+        if request.continuation_id and request.step_number == 1:
+            previous_context = self._load_previous_plan_context(request.continuation_id)
+            if previous_context:
+                response_data["previous_plan_context"] = previous_context
 
         # Handle branching like original planner
         if request.is_branch_point and request.branch_from_step and request.branch_id:

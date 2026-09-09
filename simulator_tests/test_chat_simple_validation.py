@@ -21,7 +21,7 @@ class ChatSimpleValidationTest(ConversationBaseTest):
 
     @property
     def test_name(self) -> str:
-        return "_validation"
+        return "chat_validation"
 
     @property
     def test_description(self) -> str:

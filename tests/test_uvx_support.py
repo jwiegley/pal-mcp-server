@@ -14,12 +14,13 @@ import pytest
 class TestUvxEnvironmentHandling:
     """Test uvx-specific environment handling features."""
 
-    def test_dotenv_import_success(self):
+    def test_dotenv_import_success(self, monkeypatch, tmp_path):
         """Test that dotenv is imported successfully when available."""
         # Mock successful dotenv import
         mock_load = mock.MagicMock()
         mock_values = mock.MagicMock(return_value={})
         fake_dotenv = mock.MagicMock(load_dotenv=mock_load, dotenv_values=mock_values)
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
 
         with mock.patch.dict("sys.modules", {"dotenv": fake_dotenv}):
             if "utils.env" in sys.modules:

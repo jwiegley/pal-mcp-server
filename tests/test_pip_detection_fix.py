@@ -100,6 +100,82 @@ class TestPipDetectionFix:
         for pattern in expected_diagnostic_patterns:
             assert pattern in content, f"Enhanced diagnostic pattern '{pattern}' should be in script"
 
+    def test_simulators_prefer_managed_environment(self, monkeypatch, tmp_path):
+        from communication_simulator_test import CommunicationSimulator
+        from simulator_tests.base_test import BaseSimulatorTest
+
+        for directory in (".venv", ".pal_venv"):
+            python = tmp_path / directory / "bin" / "python"
+            python.parent.mkdir(parents=True)
+            python.touch()
+
+        monkeypatch.chdir(tmp_path)
+        expected = str(tmp_path / ".pal_venv" / "bin" / "python")
+        communication = object.__new__(CommunicationSimulator)
+        base = object.__new__(BaseSimulatorTest)
+
+        assert communication._get_python_path() == expected
+        assert base._get_python_path() == expected
+
+    def test_simulator_supplies_working_directory(self, monkeypatch, tmp_path):
+        import json
+        import logging
+        from types import SimpleNamespace
+
+        from simulator_tests.base_test import BaseSimulatorTest
+
+        captured = {}
+
+        def fake_run(_command, **kwargs):
+            messages = [json.loads(line) for line in kwargs["input"].splitlines()]
+            captured.update(messages[-1]["params"]["arguments"])
+            content = json.dumps({"continuation_offer": {"continuation_id": "test-thread"}})
+            response = {"jsonrpc": "2.0", "id": 2, "result": {"content": [{"type": "text", "text": content}]}}
+            return SimpleNamespace(returncode=0, stdout=json.dumps(response), stderr="")
+
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr("simulator_tests.base_test.subprocess.run", fake_run)
+        simulator = object.__new__(BaseSimulatorTest)
+        simulator.python_path = "python"
+        simulator.logger = logging.getLogger("simulator-test")
+
+        _, continuation_id = simulator.call_mcp_tool("chat", {"prompt": "test", "model": "flash"})
+
+        assert captured["working_directory_absolute_path"] == str(tmp_path)
+        assert continuation_id == "test-thread"
+
+        captured.clear()
+        simulator.call_mcp_tool("precommit", {"step": "test", "model": "flash"})
+        assert "working_directory_absolute_path" not in captured
+
+    def test_simulator_registry_names_are_consistent(self):
+        from simulator_tests import TEST_REGISTRY
+
+        for name, test_class in TEST_REGISTRY.items():
+            assert test_class(verbose=False).test_name == name
+
+    def test_simulator_log_reader_honors_since_time(self, monkeypatch, tmp_path):
+        from simulator_tests.log_utils import LogUtils
+
+        main_log = tmp_path / "main.log"
+        activity_log = tmp_path / "activity.log"
+        main_log.write_text(
+            "2026-08-01 00:00:00,000 - old\n"
+            "old continuation\n"
+            "2026-09-09 12:00:00,001 - new main\n"
+            "new continuation\n"
+        )
+        activity_log.write_text("2026-08-01 00:00:00,000 - old activity\n" "2026-09-09 12:00:01,001 - new activity\n")
+        monkeypatch.setattr(LogUtils, "MAIN_LOG_FILE", str(main_log))
+        monkeypatch.setattr(LogUtils, "ACTIVITY_LOG_FILE", str(activity_log))
+
+        logs = LogUtils.get_server_logs_since("2026-09-09T12:00:00")
+
+        assert "old" not in logs
+        assert "new main" in logs
+        assert "new continuation" in logs
+        assert "new activity" in logs
+
     def test_setup_env_file_does_not_create_bsd_backup(self, tmp_path):
         """Ensure setup_env_file avoids creating .env'' artifacts (BSD sed behavior)."""
         script_path = Path("./run-server.sh").resolve()

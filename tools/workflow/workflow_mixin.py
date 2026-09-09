@@ -668,6 +668,10 @@ class BaseWorkflowMixin(ABC):
 
             # Handle continuation
             continuation_id = request.continuation_id
+            if not continuation_id and request.step_number == 1:
+                self.work_history = []
+                self.consolidated_findings = ConsolidatedFindings()
+                self.initial_request = None
 
             # Restore workflow state on continuation
             if continuation_id:

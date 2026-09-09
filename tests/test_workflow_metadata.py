@@ -125,6 +125,27 @@ class TestWorkflowMetadata:
                 else:
                     os.environ[key] = value
 
+    @pytest.mark.asyncio
+    async def test_fresh_workflow_resets_instance_state(self):
+        tool = DebugIssueTool()
+        tool.work_history = [{"findings": "stale"}]
+        tool.consolidated_findings.findings = ["stale"]
+
+        await tool.execute_workflow(
+            {
+                "step": "Start a fresh investigation",
+                "step_number": 1,
+                "total_steps": 2,
+                "next_step_required": True,
+                "findings": "fresh",
+                "confidence": "low",
+            }
+        )
+
+        assert len(tool.work_history) == 1
+        assert tool.work_history[0]["findings"] == "fresh"
+        assert tool.consolidated_findings.findings == ["Step 1: fresh"]
+
     @pytest.mark.no_mock_provider
     def test_workflow_metadata_in_error_response(self):
         """

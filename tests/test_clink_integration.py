@@ -75,7 +75,7 @@ async def test_clink_claude_single_digit_sum():
     assert status in {"success", "continuation_available"}
 
     content = payload.get("content", "").strip()
-    assert content == "4"
+    assert content.split("<SUMMARY>", 1)[0].strip() == "4"
 
     if status == "continuation_available":
         offer = payload.get("continuation_offer") or {}

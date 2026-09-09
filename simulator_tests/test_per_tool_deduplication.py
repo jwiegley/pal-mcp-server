@@ -62,7 +62,7 @@ def divide(x, y):
             precommit_params = {
                 "step": "Initial analysis of dummy_code.py for commit readiness. Please give me a quick one line reply.",
                 "step_number": 1,
-                "total_steps": 2,
+                "total_steps": 3,
                 "next_step_required": True,
                 "findings": "Starting pre-commit validation of dummy_code.py",
                 "path": os.getcwd(),  # Use current working directory as the git repo path
@@ -71,7 +71,7 @@ def divide(x, y):
                 "model": "flash",
             }
 
-            response1, continuation_id = self.call_mcp_tool("precommit", precommit_params)
+            response1, continuation_id = self.call_mcp_tool_direct("precommit", precommit_params)
             if not response1:
                 self.logger.error("  ❌ Step 1: precommit tool failed")
                 return False
@@ -100,7 +100,7 @@ def divide(x, y):
                 "model": "flash",
             }
 
-            response2, _ = self.call_mcp_tool("codereview", codereview_params)
+            response2, _ = self.call_mcp_tool_direct("codereview", codereview_params)
             if not response2:
                 self.logger.error("  ❌ Step 2: codereview tool failed")
                 return False
@@ -125,8 +125,8 @@ def subtract(a, b):
                 "continuation_id": continuation_id,
                 "step": "Continue analysis with new_feature.py added. Please give me a quick one line reply about both files.",
                 "step_number": 2,
-                "total_steps": 2,
-                "next_step_required": False,
+                "total_steps": 3,
+                "next_step_required": True,
                 "findings": "Continuing pre-commit validation with both dummy_code.py and new_feature.py",
                 "path": os.getcwd(),  # Use current working directory as the git repo path
                 "relevant_files": [dummy_file_path, new_file_path],  # Old + new file
@@ -134,12 +134,25 @@ def subtract(a, b):
                 "model": "flash",
             }
 
-            response3, _ = self.call_mcp_tool("precommit", continue_params)
+            response3, _ = self.call_mcp_tool_direct("precommit", continue_params)
             if not response3:
                 self.logger.error("  ❌ Step 3: precommit continuation failed")
                 return False
 
             self.logger.info("  ✅ Step 3: precommit continuation completed")
+
+            final_params = {
+                **continue_params,
+                "step": "Complete pre-commit validation after checking both files.",
+                "step_number": 3,
+                "next_step_required": False,
+                "findings": "Completed pre-commit validation of dummy_code.py and new_feature.py",
+            }
+            response4, _ = self.call_mcp_tool_direct("precommit", final_params)
+            if not response4:
+                self.logger.error("  ❌ Step 4: final precommit step failed")
+                return False
+            self.logger.info("  ✅ Step 4: final precommit step completed")
 
             # Validate results in server logs
             self.logger.info("  📋 Validating conversation history and file deduplication...")
