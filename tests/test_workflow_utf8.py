@@ -6,7 +6,7 @@ and the generation of properly encoded JSON responses.
 import json
 import os
 import unittest
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 from tools.analyze import AnalyzeTool
 from tools.codereview import CodeReviewTool
@@ -76,7 +76,7 @@ class TestWorkflowToolsUTF8(unittest.IsolatedAsyncioTestCase):
         mock_provider = Mock()
         mock_provider.get_provider_type.return_value = Mock(value="test")
         mock_provider.get_capabilities.return_value = Mock(supports_extended_thinking=False)
-        mock_provider.generate_content = AsyncMock(
+        mock_provider.generate_content = Mock(
             return_value=Mock(
                 content=json.dumps(
                     {
@@ -118,13 +118,9 @@ class TestWorkflowToolsUTF8(unittest.IsolatedAsyncioTestCase):
         response_text = result[0].text
         response_data = json.loads(response_text)
 
-        # Structure checks
         self.assertIn("status", response_data)
-
-        # Check that the French instruction was added
-        # The mock provider's generate_content should be called
-        mock_provider.generate_content.assert_called()
-        # The call was successful, which means our fix worked
+        self.assertIn("Analysis completed successfully", response_text)
+        mock_provider.generate_content.assert_called_once()
 
     @patch("tools.shared.base_tool.BaseTool.get_model_provider")
     async def test_codereview_tool_french_findings(self, mock_get_provider):
@@ -133,7 +129,7 @@ class TestWorkflowToolsUTF8(unittest.IsolatedAsyncioTestCase):
         mock_provider = Mock()
         mock_provider.get_provider_type.return_value = Mock(value="test")
         mock_provider.get_capabilities.return_value = Mock(supports_extended_thinking=False)
-        mock_provider.generate_content = AsyncMock(
+        mock_provider.generate_content = Mock(
             return_value=Mock(
                 content=json.dumps(
                     {
@@ -206,7 +202,7 @@ class TestWorkflowToolsUTF8(unittest.IsolatedAsyncioTestCase):
         mock_provider = Mock()
         mock_provider.get_provider_type.return_value = Mock(value="test")
         mock_provider.get_capabilities.return_value = Mock(supports_extended_thinking=False)
-        mock_provider.generate_content = AsyncMock(
+        mock_provider.generate_content = Mock(
             return_value=Mock(
                 content=json.dumps(
                     {

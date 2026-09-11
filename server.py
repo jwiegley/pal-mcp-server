@@ -93,9 +93,13 @@ class LocalTimeFormatter(logging.Formatter):
 # Configure both console and file logging
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-# Clear any existing handlers first
+# Close replaced handlers so reloads neither leak files nor duplicate activity logs.
 root_logger = logging.getLogger()
-root_logger.handlers.clear()
+mcp_logger = logging.getLogger("mcp_activity")
+for configured_logger in (root_logger, mcp_logger):
+    for handler in configured_logger.handlers[:]:
+        configured_logger.removeHandler(handler)
+        handler.close()
 
 # Create and configure stderr handler explicitly
 stderr_handler = logging.StreamHandler(sys.stderr)
@@ -129,7 +133,6 @@ try:
     logging.getLogger().addHandler(file_handler)
 
     # Create a special logger for MCP activity tracking with size-based rotation
-    mcp_logger = logging.getLogger("mcp_activity")
     mcp_file_handler = RotatingFileHandler(
         log_dir / "mcp_activity.log",
         maxBytes=10 * 1024 * 1024,  # 20MB max file size
