@@ -37,6 +37,8 @@ class TestAnthropicProviderIdentity:
         provider = AnthropicModelProvider("test-key")
         assert provider.validate_model_name("claude-fable-5") is True
         assert provider.validate_model_name("fable") is True
+        assert provider.validate_model_name("claude-opus-5-5") is True
+        assert provider.validate_model_name("opus-5.5") is True
         assert provider.validate_model_name("claude-opus-5") is True
         assert provider.validate_model_name("opus") is True
         assert provider.validate_model_name("opus-5") is True
@@ -49,6 +51,9 @@ class TestAnthropicProviderIdentity:
 
     def test_resolve_model_name(self):
         provider = AnthropicModelProvider("test-key")
+        assert provider._resolve_model_name("opus") == "claude-opus-5-5"
+        assert provider._resolve_model_name("opus-5.5") == "claude-opus-5-5"
+        assert provider._resolve_model_name("opus-5") == "claude-opus-5"
         assert provider._resolve_model_name("opus-4.8") == "claude-opus-4-8"
         assert provider._resolve_model_name("claude-opus-4.8") == "claude-opus-4-8"
         assert provider._resolve_model_name("haiku-4.5") == "claude-haiku-4-5-20251001"
@@ -214,6 +219,40 @@ class TestAnthropicGenerateContent:
         # Fable 5 rejects temperature/top_p/top_k (HTTP 400); never send them.
         assert "temperature" not in kwargs
 
+    @pytest.mark.parametrize(
+        ("model_name", "canonical_name"),
+        [
+            ("opus", "claude-opus-5-5"),
+            ("opus-5.5", "claude-opus-5-5"),
+            ("claude-opus-5-5", "claude-opus-5-5"),
+        ],
+    )
+    def test_opus_5_5_uses_adaptive_thinking_and_no_temperature(self, model_name, canonical_name):
+        provider, mock_client = self._provider_with_mock_client()
+        _wire_stream(mock_client, _make_mock_message())
+
+        provider.generate_content(prompt="think", model_name=model_name, temperature=0.5, thinking_mode="max")
+        kwargs = mock_client.messages.stream.call_args[1]
+        assert kwargs["model"] == canonical_name
+        # Opus 5.5 rejects budget_tokens at every effort level; effort is the only control.
+        assert "thinking" not in kwargs
+        assert kwargs["extra_body"]["thinking"] == {"type": "adaptive"}
+        assert kwargs["extra_body"]["output_config"] == {"effort": "max"}
+        assert "temperature" not in kwargs
+
+    def test_opus_5_5_never_requests_disabled_thinking(self):
+        provider, mock_client = self._provider_with_mock_client()
+        _wire_stream(mock_client, _make_mock_message())
+
+        provider.generate_content(prompt="quick", model_name="opus-5.5", temperature=0.5, thinking_mode="off")
+        kwargs = mock_client.messages.stream.call_args[1]
+        assert kwargs["model"] == "claude-opus-5-5"
+        # {"type": "disabled"} 400s on Opus 5.5 at every effort level, so "off" must omit
+        # the thinking config entirely and let the API run its adaptive default.
+        assert "thinking" not in kwargs
+        assert "extra_body" not in kwargs
+        assert "temperature" not in kwargs
+
     def test_fable_refusal_stop_reason_surfaced(self, caplog):
         """Fable 5 safety classifiers return HTTP 200 with stop_reason='refusal' and empty
         content; the provider must surface it in metadata and log a warning instead of
@@ -316,6 +355,7 @@ class TestAnthropicPreferredModel:
 
     ALL_MODELS = [
         "claude-fable-5",
+        "claude-opus-5-5",
         "claude-opus-5",
         "claude-opus-4-8",
         "claude-opus-4-7",
@@ -336,13 +376,21 @@ class TestAnthropicPreferredModel:
         provider = AnthropicModelProvider("test-key")
         allowed = [m for m in self.ALL_MODELS if m != "claude-fable-5"]
         preferred = provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed)
+        assert preferred == "claude-opus-5-5"
+
+    def test_extended_reasoning_falls_back_to_opus_5_when_opus_5_5_unavailable(self):
+        from tools.models import ToolModelCategory
+
+        provider = AnthropicModelProvider("test-key")
+        allowed = [m for m in self.ALL_MODELS if m not in ("claude-fable-5", "claude-opus-5-5")]
+        preferred = provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed)
         assert preferred == "claude-opus-5"
 
     def test_extended_reasoning_falls_back_to_opus_4_8_when_opus_5_unavailable(self):
         from tools.models import ToolModelCategory
 
         provider = AnthropicModelProvider("test-key")
-        allowed = [m for m in self.ALL_MODELS if m not in ("claude-fable-5", "claude-opus-5")]
+        allowed = [m for m in self.ALL_MODELS if m not in ("claude-fable-5", "claude-opus-5-5", "claude-opus-5")]
         preferred = provider.get_preferred_model(ToolModelCategory.EXTENDED_REASONING, allowed)
         assert preferred == "claude-opus-4-8"
 
@@ -369,7 +417,7 @@ class TestAnthropicPreferredModel:
         assert preferred == "claude-sonnet-5"
 
     def test_fallback_model_is_opus(self):
-        assert AnthropicModelProvider.FALLBACK_MODEL == "claude-opus-5"
+        assert AnthropicModelProvider.FALLBACK_MODEL == "claude-opus-5-5"
 
     def test_balanced_falls_back_to_opus_when_fable_unavailable(self):
         from tools.models import ToolModelCategory
@@ -377,7 +425,7 @@ class TestAnthropicPreferredModel:
         provider = AnthropicModelProvider("test-key")
         allowed = [m for m in self.ALL_MODELS if m != "claude-fable-5"]
         preferred = provider.get_preferred_model(ToolModelCategory.BALANCED, allowed)
-        assert preferred == "claude-opus-5"
+        assert preferred == "claude-opus-5-5"
 
     def test_fast_response_falls_back_to_opus_when_haiku_unavailable(self):
         from tools.models import ToolModelCategory
@@ -385,4 +433,4 @@ class TestAnthropicPreferredModel:
         provider = AnthropicModelProvider("test-key")
         allowed = [m for m in self.ALL_MODELS if m != "claude-haiku-4-5-20251001"]
         preferred = provider.get_preferred_model(ToolModelCategory.FAST_RESPONSE, allowed)
-        assert preferred == "claude-opus-5"
+        assert preferred == "claude-opus-5-5"

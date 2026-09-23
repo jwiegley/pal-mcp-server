@@ -34,7 +34,7 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
 
     # Canonical model identifiers used for tool-category routing.
     PRIMARY_MODEL = "claude-fable-5"
-    FALLBACK_MODEL = "claude-opus-5"
+    FALLBACK_MODEL = "claude-opus-5-5"
     FAST_MODEL = "claude-haiku-4-5-20251001"
 
     # PAL thinking levels -> fraction of a model's max_thinking_tokens (budget scheme).
@@ -212,6 +212,7 @@ class AnthropicModelProvider(RegistryBackedProviderMixin, ModelProvider):
                     [
                         self.PRIMARY_MODEL,
                         self.FALLBACK_MODEL,
+                        "claude-opus-5",
                         "claude-opus-4-8",
                         "claude-opus-4-7",
                         "claude-opus-4-6",

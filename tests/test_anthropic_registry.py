@@ -17,6 +17,7 @@ def test_registry_loads_expected_models():
     models = registry.list_models()
     assert "claude-fable-5-1" in models
     assert "claude-fable-5" in models
+    assert "claude-opus-5-5" in models
     assert "claude-opus-5" in models
     assert "claude-opus-4-8" in models
     assert "claude-sonnet-5" in models
@@ -41,7 +42,10 @@ def test_registry_resolves_version_aliases():
     assert registry.resolve("fable-5.1").model_name == "claude-fable-5-1"
     assert registry.resolve("fable-5-1").model_name == "claude-fable-5-1"
     assert registry.resolve("claude-fable-5.1").model_name == "claude-fable-5-1"
-    assert registry.resolve("opus").model_name == "claude-opus-5"
+    assert registry.resolve("opus").model_name == "claude-opus-5-5"
+    assert registry.resolve("opus-5.5").model_name == "claude-opus-5-5"
+    assert registry.resolve("opus-5-5").model_name == "claude-opus-5-5"
+    assert registry.resolve("claude-opus-5.5").model_name == "claude-opus-5-5"
     assert registry.resolve("opus-5").model_name == "claude-opus-5"
     assert registry.resolve("opus-4.8").model_name == "claude-opus-4-8"
     assert registry.resolve("sonnet-5").model_name == "claude-sonnet-5"
@@ -76,16 +80,28 @@ def test_fable_5_1_outranks_fable_5_and_opus():
     assert opus_5.intelligence_score > opus_4_8.intelligence_score
 
 
-def test_opus_5_capabilities():
-    """Opus 5: 1M context, 128K output, adaptive-only thinking (no budget scheme)."""
+def test_opus_5_5_ranks_between_fable_and_opus_5():
     registry = AnthropicModelRegistry()
-    caps = registry.resolve("claude-opus-5")
+    fable_5_1 = registry.resolve("claude-fable-5-1")
+    fable_5 = registry.resolve("claude-fable-5")
+    opus_5_5 = registry.resolve("claude-opus-5-5")
+    opus_5 = registry.resolve("claude-opus-5")
+    assert fable_5_1.intelligence_score > opus_5_5.intelligence_score
+    assert fable_5.intelligence_score >= opus_5_5.intelligence_score
+    assert opus_5_5.intelligence_score > opus_5.intelligence_score
+
+
+@pytest.mark.parametrize("model_name", ["claude-opus-5", "claude-opus-5-5"])
+def test_opus_5_capabilities(model_name):
+    """Opus 5 and 5.5: 1M context, 128K output, adaptive-only thinking (no budget scheme)."""
+    registry = AnthropicModelRegistry()
+    caps = registry.resolve(model_name)
     assert caps is not None
     assert caps.context_window == 1_000_000
     assert caps.max_output_tokens == 128_000
     assert caps.supports_extended_thinking is True
     assert caps.default_reasoning_effort == "high"
-    # Adaptive-only: budget_tokens is removed on Opus 5 (400s on the API).
+    # Adaptive-only: budget_tokens is removed on Opus 5 and 5.5 (400s on the API).
     assert caps.max_thinking_tokens == 0
     assert caps.supports_images is True
     assert caps.supports_function_calling is True
@@ -110,6 +126,7 @@ def test_adaptive_models_declare_reasoning_effort():
     registry = AnthropicModelRegistry()
     assert registry.resolve("claude-fable-5-1").default_reasoning_effort == "high"
     assert registry.resolve("claude-fable-5").default_reasoning_effort == "high"
+    assert registry.resolve("claude-opus-5-5").default_reasoning_effort == "high"
     assert registry.resolve("claude-opus-5").default_reasoning_effort == "high"
     assert registry.resolve("claude-opus-4-8").default_reasoning_effort == "high"
     assert registry.resolve("claude-haiku-4-5-20251001").default_reasoning_effort is None
